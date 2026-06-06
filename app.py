@@ -3,7 +3,7 @@ import urllib.parse
 
 # Sayfa Ayarları
 st.set_page_config(
-    page_title="GamerFinder // Premium", 
+    page_title="Berk // Premium", 
     page_icon="🎮", 
     layout="centered"
 )
