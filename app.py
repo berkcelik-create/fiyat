@@ -3,7 +3,7 @@ import urllib.parse
 
 # Sayfa Ayarları
 st.set_page_config(
-    page_title="GamerFinder // Logolu Karşılaştırma", 
+    page_title="GamerFinder // Premium", 
     page_icon="🎮", 
     layout="centered"
 )
@@ -14,7 +14,7 @@ if "gecmis" not in st.session_state:
 
 # Başlık Bölümü
 st.title("🎮 GamerFinder Pro")
-st.caption("Oyuncu ekipmanları ve bilgisayar bileşenleri için akıllı yönlendirme motoru v3.0")
+st.caption("Oyuncu ekipmanları ve bilgisayar bileşenleri için akıllı yönlendirme motoru v3.1")
 
 st.write("---")
 
@@ -50,7 +50,7 @@ else:
     if manuel_isim:
         arama_kelimesi = manuel_isim.strip()
 
-# --- SONUÇLAR VE LOGOLU BUTONLAR BÖLÜMÜ ---
+# --- SONUÇLAR VE LOGOLU MAĞAZALAR BÖLÜMÜ ---
 if arama_kelimesi:
     arama_kelimesi_upper = arama_kelimesi.upper()
     st.success(f"🎯 Hedef Ürün Belirlendi: **{arama_kelimesi_upper}**")
@@ -61,17 +61,33 @@ if arama_kelimesi:
     
     safe_search = urllib.parse.quote(arama_kelimesi)
     
-    # Mağazalar, Arama Linkleri ve Logo URL'leri
-    mağazalar = [
-        {
-            "ad": "Wraith Esports",
-            "url": f"https://wraithesports.com/search?q={safe_search}",
-            "logo": "https://wraithesports.com/cdn/shop/files/wraith-esports-logo-v2-black-font_220x.png?v=1685458032"
-        },
-        {
-            "ad": "İncehesap",
-            "url": f"https://www.incehesap.com/arama/?fiyat_kriteri=1&s={safe_search}",
-            "logo": "https://www.incehesap.com/resim/b_logo.svg"
-        },
-        {
-            "ad": "İtopya",
+    # Mağazaların Listesi (Parantez hataları giderilmiş net veri yapısı)
+    magazalar = [
+        {"ad": "Wraith Esports", "url": f"https://wraithesports.com/search?q={safe_search}", "logo": "🚀"},
+        {"ad": "İncehesap", "url": f"https://www.incehesap.com/arama/?fiyat_kriteri=1&s={safe_search}", "logo": "🔥"},
+        {"ad": "İtopya", "url": f"https://www.itopya.com/Arama?q={safe_search}", "logo": "🦎"},
+        {"ad": "Sinerji", "url": f"https://www.sinerji.gen.tr/arama?q={safe_search}", "logo": "⚡"},
+        {"ad": "Trendyol", "url": f"https://www.trendyol.com/sr?q={safe_search}", "logo": "🧡"},
+        {"ad": "Hepsiburada", "url": f"https://www.hepsiburada.com/ara?q={safe_search}", "logo": "💙"},
+        {"ad": "Amazon TR", "url": f"https://www.amazon.com.tr/s?k={safe_search}", "logo": "💛"},
+        {"ad": "Akakçe", "url": f"https://www.akakce.com/arama/?q={safe_search}", "logo": "🔍"}
+    ]
+    
+    st.subheader("🛍️ Mağaza Seçenekleri")
+    st.write("Canlı arama sonuçlarını yeni sekmede görmek için tıklayın:")
+    
+    # İki sütunlu şık düzen
+    sol_col, sag_col = st.columns(2)
+    
+    for i, m in enumerate(magazalar):
+        buton_metni = f"{m['logo']} {m['ad']}"
+        if i % 2 == 0:
+            sol_col.link_button(buton_metni, m['url'], use_container_width=True)
+        else:
+            sag_col.link_button(buton_metni, m['url'], use_container_width=True)
+
+# --- GEÇMİŞ ARAMALAR BÖLÜMÜ ---
+if st.session_state.gecmis:
+    st.write("---")
+    st.subheader("🕒 Son Arattıklarınız")
+    for gecmis_urun in
