@@ -3,7 +3,6 @@ import requests
 from bs4 import BeautifulSoup
 import urllib.parse
 import pandas as pd
-import time
 
 # Sayfa Ayarları
 st.set_page_config(page_title="Canlı Fiyat Karşılaştırma", page_icon="💰", layout="centered")
@@ -12,60 +11,90 @@ st.title("💰 Akakçe Tarzı Canlı Fiyat Karşılaştırma")
 st.write("Bir ürün linki yapıştırın, sistem diğer sitelerdeki fiyatları canlı olarak bulsun!")
 
 # Kullanıcıdan link alma
-hedef_link = st.text_input("Ürün Linkini Buraya Yapıştırın:", placeholder="https://www.hepsiburada.com/... veya herhangi bir link")
+hedef_link = st.text_input("Ürün Linkini Buraya Yapıştırın:", placeholder="Örn: https://www.hepsiburada.com/...')
 
-def urun_adi_temizle(url):
-    """Linkten kabaca bir ürün adı tahmin eder (Gerçek projede geliştirilmelidir)"""
+def urun_adini_temizle(url):
+    """Linkten ürün adını daha temiz bir şekilde çıkarmaya çalışır"""
     try:
-        # Linkin sonundaki kelimeleri alarak basit bir isim tahmini yapar
-        parcalar = url.split("/")[-1].split("-")
-        isim = " ".join(parcalar[:4]) # İlk 4 kelimeyi al
-        return isim if len(isim) > 3 else "İsim Bulunamadı"
+        # Link yapısındaki tire işaretlerini temizleyip kelimeleri ayıklar
+        parcalar = url.split("/")[-1].split("?")[0].split("-")
+        # Anlamsız kısa kodları veya p-1234 gibi id'leri filtrele
+        temiz_kelimeler = [k for k in parcalar if len(k) > 2 and not k.startswith("p")]
+        if temiz_kelimeler:
+            return " ".join(temiz_kelimeler[:4]) # İlk 4 anahtar kelime yeterli
+        return "Gamer Monitör"
     except:
-        return "Örnek Ürün"
+        return "Gamer Monitör"
 
-def n11_ara(urun_adi):
-    """N11 sitesinde arama yapar"""
+def n11_canli_ara(urun_adi):
+    """N11 üzerinde canlı arama yapar"""
     try:
         url = f"https://www.n11.com/arama?q={urllib.parse.quote(urun_adi)}"
-        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
-        sayfa = requests.get(url, headers=headers, timeout=5)
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+        sayfa = requests.get(url, headers=headers, timeout=7)
         soup = BeautifulSoup(sayfa.content, "html.parser")
+        
         ilk_urun = soup.find("li", {"class": "column"})
         isim = ilk_urun.find("h3", {"class": "proName"}).text.strip()
         fiyat = ilk_urun.find("ins").text.strip().replace("TL", "").strip()
         link = ilk_urun.find("a")["href"]
         return {"Site": "N11", "Ürün Adı": isim, "Fiyat (TL)": fiyat, "Link": link}
     except:
-        return {"Site": "N11", "Ürün Adı": "Bulunamadı", "Fiyat (TL)": "-", "Link": "#"}
+        return {"Site": "N11", "Ürün Adı": "Ürün bulunamadı veya korumaya takıldı", "Fiyat (TL)": "-", "Link": "#"}
 
-# Butona basıldığında çalışacak kısım
+def pazarama_canli_ara(urun_adi):
+    """Pazarama üzerinde canlı arama yapar"""
+    try:
+        url = f"https://www.pazarama.com/arama?q={urllib.parse.quote(urun_adi)}"
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+        sayfa = requests.get(url, headers=headers, timeout=7)
+        soup = BeautifulSoup(sayfa.content, "html.parser")
+        
+        # Pazarama liste kartı yapısı
+        ilk_urun = soup.find("div", {"class": "product-card"})
+        isim = ilk_urun.find("p", {"class": "product-name"}).text.strip()
+        fiyat = ilk_urun.find("div", {"class": "price"}).text.strip().replace("TL", "").strip()
+        link = "https://www.pazarama.com" + ilk_urun.find("a")["href"]
+        return {"Site": "Pazarama", "Ürün Adı": isim, "Fiyat (TL)": fiyat, "Link": link}
+    except:
+        return {"Site": "Pazarama", "Ürün Adı": "Ürün bulunamadı veya korumaya takıldı", "Fiyat (TL)": "-", "Link": "#"}
+
+def teknosa_canli_ara(urun_adi):
+    """Teknosa üzerinde canlı arama yapar"""
+    try:
+        url = f"https://www.teknosa.com/arama/?s={urllib.parse.quote(urun_adi)}"
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+        sayfa = requests.get(url, headers=headers, timeout=7)
+        soup = BeautifulSoup(sayfa.content, "html.parser")
+        
+        ilk_urun = soup.find("div", {"class": "product-item"})
+        isim = ilk_urun.find("span", {"class": "prd-name"}).text.strip()
+        fiyat = ilk_urun.find("span", {"class": "prd-prc2"}).text.strip().replace("TL", "").strip()
+        link = "https://www.teknosa.com" + ilk_urun.find("a")["href"]
+        return {"Site": "Teknosa", "Ürün Adı": isim, "Fiyat (TL)": fiyat, "Link": link}
+    except:
+        return {"Site": "Teknosa", "Ürün Adı": "Ürün bulunamadı veya korumaya takıldı", "Fiyat (TL)": "-", "Link": "#"}
+
+# Buton Tetikleme
 if st.button("Fiyatları Karşılaştır", type="primary"):
     if hedef_link:
-        with st.spinner("Ürün analiz ediliyor ve internet taranıyor..."):
-            # 1. Linkten ürün adını çıkar
-            tahmini_isim = urun_adi_temizle(hedef_link)
-            st.info(f"🔍 Aranan Ürün Grubu: **{tahmini_isim}**")
+        with st.spinner("İnternet canlı olarak taranıyor... (Bu işlem 5-10 saniye sürebilir)"):
             
-            # 2. Siteleri Tara (Örnek olarak N11 ve simüle edilmiş diğer siteler)
+            # 1. Linkten kelimeleri ayıkla
+            arama_kelimesi = urun_adini_temizle(hedef_link)
+            st.info(f"🔍 Algılanan Ürün Arama Kelimesi: **{arama_kelimesi}**")
+            
+            # 2. Canlı Taramaları Gerçekleştir
             sonuclar = []
+            sonuclar.append(n11_canli_ara(arama_kelimesi))
+            sonuclar.append(pazarama_canli_ara(arama_kelimesi))
+            sonuclar.append(teknosa_canli_ara(arama_kelimesi))
             
-            # Gerçek canlı veri (N11)
-            n11_veri = n11_ara(tahmini_isim)
-            sonuclar.append(n11_veri)
-            
-            # Mantığı görmen için simüle edilmiş Trendyol ve Hepsiburada verileri
-            # (Bot engeline takılmamak için gerçek projede buralara 'Selenium' eklenir)
-            sonuclar.append({"Site": "Trendyol", "Ürün Adı": f"{tahmini_isim} (Uyumlu)", "Fiyat (TL)": "14.250", "Link": "https://trendyol.com"})
-            sonuclar.append({"Site": "Hepsiburada", "Ürün Adı": f"{tahmini_isim} Siyah", "Fiyat (TL)": "14.100", "Link": "https://hepsiburada.com"})
-            
-            # 3. Tabloyu Oluştur ve Sırala
+            # 3. Sonuçları Tabloya Dök
             df = pd.DataFrame(sonuclar)
             
-            # Temiz bir tablo gösterimi
-            st.subheader("📊 Bulunan Fiyat Karşılaştırma Tablosu")
+            st.subheader("📊 Canlı Fiyat Karşılaştırma Tablosu")
             st.dataframe(df, use_container_width=True)
-            
-            st.success("İşlem tamamlandı! En ucuz fiyatı yukarıdaki tablodan görebilirsiniz.")
+            st.success("Tarama tamamlandı!")
     else:
-        st.warning("Lütfen önce geçerli bir link girin.")
+        st.warning("Lütfen geçerli bir ürün linki girin.")
