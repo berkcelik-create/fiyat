@@ -13,7 +13,7 @@ if "gecmis" not in st.session_state:
     st.session_state.gecmis = []
 
 # Başlık Bölümü
-st.title("🎮 GamerFinder Pro")
+st.title("🎮 BNFinder Pro")
 st.caption("Oyuncu ekipmanları ve bilgisayar bileşenleri için akıllı yönlendirme motoru v3.1")
 
 st.write("---")
