@@ -90,4 +90,5 @@ if arama_kelimesi:
 if st.session_state.gecmis:
     st.write("---")
     st.subheader("🕒 Son Arattıklarınız")
-    for gecmis_urun in
+    for gecmis_urun in st.session_state.gecmis:
+        st.info(f"🔹 {gecmis_urun}")
