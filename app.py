@@ -10,8 +10,8 @@ st.set_page_config(page_title="Canlı Fiyat Karşılaştırma", page_icon="💰"
 st.title("💰 Akakçe Tarzı Canlı Fiyat Karşılaştırma")
 st.write("Bir ürün linki yapıştırın, sistem diğer sitelerdeki fiyatları canlı olarak bulsun!")
 
-# Kullanıcıdan link alma
-hedef_link = st.text_input("Ürün Linkini Buraya Yapıştırın:", placeholder="Örn: https://www.hepsiburada.com/...')
+# Kullanıcıdan link alma (Hata veren tırnak işaretini burada düzelttim)
+hedef_link = st.text_input("Ürün Linkini Buraya Yapıştırın:", placeholder="Örn: https://www.hepsiburada.com/...")
 
 def urun_adini_temizle(url):
     """Linkten ürün adını daha temiz bir şekilde çıkarmaya çalışır"""
@@ -86,15 +86,4 @@ if st.button("Fiyatları Karşılaştır", type="primary"):
             
             # 2. Canlı Taramaları Gerçekleştir
             sonuclar = []
-            sonuclar.append(n11_canli_ara(arama_kelimesi))
-            sonuclar.append(pazarama_canli_ara(arama_kelimesi))
-            sonuclar.append(teknosa_canli_ara(arama_kelimesi))
-            
-            # 3. Sonuçları Tabloya Dök
-            df = pd.DataFrame(sonuclar)
-            
-            st.subheader("📊 Canlı Fiyat Karşılaştırma Tablosu")
-            st.dataframe(df, use_container_width=True)
-            st.success("Tarama tamamlandı!")
-    else:
-        st.warning("Lütfen geçerli bir ürün linki girin.")
+            sonuclar.append(n11_can
