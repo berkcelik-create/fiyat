@@ -30,7 +30,7 @@ with st.form("arama_formu"):
     
     arama_tetiklendi = st.form_submit_button("Motoru Çalıştır", type="primary", use_container_width=True)
 
-# GÜVENLİ LINK ÇÖZÜMLEME MOTORU
+# 🛠️ NOKTA ATIŞI LINK ANALİZ MOTORU
 def link_analiz_et(url):
     try:
         url = url.strip()
@@ -41,13 +41,13 @@ def link_analiz_et(url):
         cozulmus_url = urllib.parse.unquote(url).lower()
         parsed_url = urllib.parse.urlparse(cozulmus_url)
         
-        # Domain ve query'leri temizleyip sadece saf ürün yolunu alıyoruz
+        # Sadece saf ürün yolunu alıyoruz
         link_yolu = parsed_url.path
         
         # Linki tüm olası ayıraçlara göre kelimelere böl
         ham_kelimeler = re.split(r'[/_\-+.]', link_yolu)
         
-        # Siteden gelebilecek gereksiz çöp kelimeler havuzu
+        # Temizlik aşaması
         site_copleri = {
             "html", "urun", "p", "detay", "fiyat", "ozellikleri", "satinal", "gaming", 
             "oyuncu", "store", "product", "com", "tr", "net", "org", "item", "shop", 
@@ -56,29 +56,23 @@ def link_analiz_et(url):
             "www", "https", "http"
         }
         
-        filtrelenmis_kelimeler = []
+        filtrelenmis = []
         for k in ham_kelimeler:
             k = k.strip()
-            if len(k) > 1 and not k.isdigit() and k not in site_copleri:
-                # E-ticaret sitelerinin otomatik ürettiği kısa kodları (u32084 gibi) eliyoruz
-                if not (any(char.isdigit() for char in k) and len(k) <= 7):
-                    filtrelenmis_kelimeler.append(k)
+            if len(k) > 1 and k not in site_copleri:
+                if not (any(char.isdigit() for char in k) and len(k) <= 5 and k.startswith('u')): 
+                    filtrelenmis.append(k)
 
-        # Küresel donanım markaları havuzu
-        bilinen_markalar = {
-            "kingston", "asus", "msi", "gigabyte", "amd", "intel", "nvidia", "corsair", 
-            "gskill", "team", "t-force", "samsung", "crucial", "wd", "western", "digital", 
-            "seagate", "pny", "zotac", "palit", "gainward", "sapphire", "xfx", "powercolor",
-            "razer", "logitech", "steelseries", "hyperx", "glorious", "benq"
-        }
+        # Ana donanım markaları
+        bilinen_markalar = {"kingston", "asus", "msi", "gigabyte", "amd", "intel", "nvidia", "corsair", "gskill", "samsung", "crucial"}
         
-        # Marka adı bulunursa, marka ve yanındaki en kritik 2 kelimeyi seç
-        for i, kelime in enumerate(filtrelenmis_kelimeler):
+        # Linkin içinde marka varsa, markayı ve peşinden gelen en kritik 3 kelimeyi al (Modeli bozmamak için)
+        for i, kelime in enumerate(filtrelenmis):
             if kelime in bilinen_markalar:
-                return filtrelenmis_kelimeler[i:i+3]
+                return filtrelenmis[i:i+4]
                 
-        if filtrelenmis_kelimeler:
-            return filtrelenmis_kelimeler[:3]
+        if filtrelenmis:
+            return filtrelenmis[:3]
             
         return ["oyuncu", "ekipmani"]
     except:
@@ -98,37 +92,31 @@ if arama_tetiklendi and girdi_alani:
     if arama_turu == "Link Analizi":
         kelime_listesi = link_analiz_et(girdi_alani)
     else:
-        ham_kelimeler = girdi_alani.split()
-        kelime_listesi = [k.strip() for k in ham_kelimeler if k.strip()]
+        kelime_listesi = [k.strip() for k in girdi_alani.split() if k.strip()]
         
     temiz_kelimeler = [karakter_onari(k) for k in kelime_listesi if k.strip()]
     
     if temiz_kelimeler:
         gosterim_metni = " ".join(temiz_kelimeler).upper()
         
-        # Tırnak hatası riski barındıran tüm f-string emojileri temizlendi
         st.success("Model Basariyla Cozuldu: " + gosterim_metni)
         st.write("Kopyalama Alani:")
         st.code(gosterim_metni, language="text")
         
-        # URL Standartlaştırma
+        # 🌟 İTOPYA DAHİL TÜM SİTELER İÇİN EN STABİL PAYLAŞIMLI SEÇENEK (Boşluklu Standart URL)
         standart_sorgu = " ".join(temiz_kelimeler)
-        safe_search_normal = urllib.parse.quote(standart_sorgu)
-        
-        # İtopya için kelimeleri birleşik küçük harf göndererek veritabanı eşleşmesini garantiye alıyoruz
-        itopya_sorgu = "".join(temiz_kelimeler)
-        safe_search_itopya = urllib.parse.quote(itopya_sorgu)
+        safe_search = urllib.parse.quote(standart_sorgu)
         
         # Mağazalar Listesi 
         magaza_listesi = [
-            {"ad": "Wraith Esports", "url": f"https://wraithesports.com/search?q={safe_search_normal}"},
-            {"ad": "Incehesap", "url": f"https://www.incehesap.com/arama/?fiyat_kriteri=1&s={safe_search_normal}"},
-            {"ad": "Itopya", "url": f"https://www.itopya.com/Arama?q={safe_search_itopya}"},
-            {"ad": "Sinerji", "url": f"https://www.sinerji.gen.tr/arama?q={safe_search_normal}"},
-            {"ad": "Trendyol", "url": f"https://www.trendyol.com/sr?q={safe_search_normal}"},
-            {"ad": "Hepsiburada", "url": f"https://www.hepsiburada.com/ara?q={safe_search_normal}"},
-            {"ad": "Amazon TR", "url": f"https://www.amazon.com.tr/s?k={safe_search_normal}"},
-            {"ad": "Akakce", "url": f"https://www.akakce.com/arama/?q={safe_search_normal}"}
+            {"ad": "Wraith Esports", "url": f"https://wraithesports.com/search?q={safe_search}"},
+            {"ad": "Incehesap", "url": f"https://www.incehesap.com/arama/?fiyat_kriteri=1&s={safe_search}"},
+            {"ad": "Itopya", "url": f"https://www.itopya.com/Arama?q={safe_search}"},
+            {"ad": "Sinerji", "url": f"https://www.sinerji.gen.tr/arama?q={safe_search}"},
+            {"ad": "Trendyol", "url": f"https://www.trendyol.com/sr?q={safe_search}"},
+            {"ad": "Hepsiburada", "url": f"https://www.hepsiburada.com/ara?q={safe_search}"},
+            {"ad": "Amazon TR", "url": f"https://www.amazon.com.tr/s?k={safe_search}"},
+            {"ad": "Akakce", "url": f"https://www.akakce.com/arama/?q={safe_search}"}
         ]
         
         st.subheader("Magaza Secenekleri")
