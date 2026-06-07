@@ -124,6 +124,28 @@ with st.expander("ℹ️ G-ENGINE Nasıl Kullanılır?"):
     
     *İpucu: Eğer aradığınız bir donanım ise, "Kriptonize Edilen Model" ismini kopyalayıp diğer sitelerde de aratabilirsiniz.*
     """)
-# Streamlit'in kendi tema ayarlarından veya 
-# st.toggle ile kullanıcıya renk modu seçeneği sunabilirsiniz.
-tema_secimi = st.toggle("🌙 Karanlık Modu Aç/Kapat")
+st.write("---")
+st.subheader("💬 Topluluk Link Panosu")
+st.caption("İnsanların paylaştığı ilginç donanım fırsatlarını burada görebilirsin.")
+
+# 1. Linkleri Gösterme Bölümü
+if st.button("🔄 Paylaşılan Linkleri Güncelle"):
+    try:
+        with open("paylasilanlar.txt", "r", encoding="utf-8") as f:
+            linkler = f.readlines()
+            for link in reversed(linkler[-5:]): # Son 5 link
+                st.info(f"🔗 {link.strip()}")
+    except FileNotFoundError:
+        st.write("Henüz kimse link paylaşmamış, ilk sen ol!")
+
+# 2. Link Ekleme Formu
+with st.expander("➕ Link Paylaş"):
+    with st.form("link_paylas", clear_on_submit=True):
+        yeni_link = st.text_input("Donanım Linki:")
+        yorum = st.text_input("Kısa Not (Örn: İndirimde!):")
+        submit_link = st.form_submit_button("Paylaş")
+        
+        if submit_link and yeni_link:
+            with open("paylasilanlar.txt", "a", encoding="utf-8") as f:
+                f.write(f"{yeni_link} - {yorum}\n")
+            st.success("Link paylaşıldı! Sayfayı yenileyince güncellenecektir.")
