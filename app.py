@@ -30,8 +30,8 @@ with st.form("arama_formu"):
     
     arama_tetiklendi = st.form_submit_button("Motoru Çalıştır", type="primary", use_container_width=True)
 
-# 🛠️ GELİŞMİŞ GÜRÜLTÜ ARNDIRICI VE LINK ÇÖZÜCÜ
-def link_temizle_ve_coz(url):
+# 🛠️ GEREKSİZ TEKNİK DETAYLARI SÜZEN GELİŞMİŞ FİLTRE MOTORU
+def link_temizle_ve_kisalt(url):
     try:
         url = url.strip().lower()
         if not url.startswith(("http://", "https://")):
@@ -40,37 +40,45 @@ def link_temizle_ve_coz(url):
         cozulmus_url = urllib.parse.unquote(url)
         parsed_url = urllib.parse.urlparse(cozulmus_url)
         
-        # Sadece path (yol) kısmını alarak domain adını tamamen dışarıda bırakıyoruz
+        # Sadece path kısmını alarak domain gürültülerini engelliyoruz
         link_yolu = parsed_url.path
         ham_kelimeler = re.split(r'[/_\-+.]', link_yolu)
         
-        # Web sitelerinin teknik link uzantıları ve sistem çöpleri
-        kesin_copler = {
+        # 1. Aşama: URL ve sistem çöpleri
+        sistem_copleri = {
             "html", "urun", "p", "detay", "fiyat", "ozellikleri", "satinal", "gaming", 
             "oyuncu", "store", "product", "net", "org", "item", "shop", "bilgisayar", "ara"
+        }
+        
+        # 2. Aşama: Aramayı bozan upuzun teknik kelime çöpleri (DPI, HZ, Renkler vb.)
+        teknik_copler = {
+            "rgb", "dpi", "hz", "1000hz", "26000", "26000dpi", "mouse", "kulaklik", 
+            "klavye", "kablosuz", "wireless", "kablolu", "siyah", "black", "beyaz", 
+            "white", "opaline", "gray", "gri", "gaming", "oyuncu", "ses", "kart", 
+            "g01", "v01", "m1", "m2", "v60", "aaa", "s", "x", "p"
         }
         
         filtrelenmis = []
         for k in ham_kelimeler:
             k = k.strip()
             
-            # Sinerji veya benzeri yerlerdeki 'aaa' gibi yapay gürültüleri temizle
+            # 'aaa' gibi sinerji gürültülerini baştan kırp
             if k.startswith("aaa") and len(k) > 3:
                 k = k[3:]
                 
-            # Kelime boş değilse, çöp listesinde değilse ve uzunluğu 1'den büyükse koru
-            if k and k not in kesin_copler and len(k) > 1:
-                # Link sonundaki otomatik ID'leri (u3165 vb.) ve kısa anlamsız sayıları eliyoruz
+            if k and (k not in sistem_copleri) and (k not in teknik_copler) and len(k) > 1:
+                # Otomatik basılan u32084 gibi kodları eliyoruz
                 if not (k.startswith('u') and any(c.isdigit() for c in k)):
-                    if not (k.isdigit() and len(k) <= 3):
-                        # Tek başına kalan 's' veya benzeri harf çöplerini engelle
-                        if k not in ["s", "x", "p"]:
-                            filtrelenmis.append(k)
+                    if not (k.isdigit() and len(k) <= 4):
+                        filtrelenmis.append(k)
         
-        if filtrelenmis:
-            return filtrelenmis
+        # Eğer filtreleme çok sert olduysa ve kelime kalmadıysa, teknik çöplerin ilk 3'ünü geri yükle
+        if not filtrelenmis:
+            gecici = [k for k in ham_kelimeler if k and k not in sistem_copleri and len(k) > 1]
+            return gecici[:3]
             
-        return ["oyuncu", "donanimi"]
+        # Mağazalarda en iyi arama sonucu için temizlenmiş ilk 3 anahtar kelimeyi döndür
+        return filtrelenmis[:3]
     except:
         return ["oyuncu", "donanimi"]
 
@@ -90,42 +98,23 @@ if arama_tetiklendi and girdi_alani:
     kelimeler = []
     
     if arama_turu == "Link Analizi":
-        kelimeler = link_temizle_ve_coz(girdi_alani)
+        kelimeler = link_temizle_ve_kisalt(girdi_alani)
     else:
-        kelimeler = [k.strip() for k in girdi_alani.split() if k.strip()]
+        # Manuel aramalarda kullanıcının yazdığı ilk 3 kelimeyi baz alarak kısaltma yapıyoruz
+        kelimeler = [k.strip() for k in girdi_alani.split() if k.strip()][:3]
         
     temiz_list = [guvenli_metin_onar(k) for k in kelimeler if k.strip()]
     
     if temiz_list:
         sonuc_model = " ".join(temiz_list).upper()
         
-        st.success("Model Basariyla Cozuldu: " + sonuc_model)
+        st.success("Model Basariyla Cozuldu ve Kisaltildi: " + sonuc_model)
         st.write("Kopyalama Alani:")
         st.code(sonuc_model, language="text")
         
-        # Arama motorlarının kabul edeceği güvenli URL formatı
+        # URL Formatlama
         sorgu_cumlesi = " ".join(temiz_list)
         safe_search = urllib.parse.quote(sorgu_cumlesi)
         
-        # Test Edilmiş ve Doğrulanmış Mağazalar Listesi
-        magaza_listesi = [
-            {"ad": "Wraith Esports", "url": f"https://wraithesports.com/search?q={safe_search}"},
-            {"ad": "Incehesap", "url": f"https://www.incehesap.com/arama/?fiyat_kriteri=1&s={safe_search}"},
-            {"ad": "Itopya", "url": f"https://www.itopya.com/ara?bul={safe_search}"},
-            {"ad": "Sinerji", "url": f"https://www.sinerji.gen.tr/arama?q={safe_search}"},
-            {"ad": "Trendyol", "url": f"https://www.trendyol.com/sr?q={safe_search}"},
-            {"ad": "Hepsiburada", "url": f"https://www.hepsiburada.com/ara?q={safe_search}"},
-            {"ad": "Amazon TR", "url": f"https://www.amazon.com.tr/s?k={safe_search}"},
-            {"ad": "Akakce", "url": f"https://www.akakce.com/arama/?q={safe_search}"}
-        ]
-        
-        st.subheader("Magaza Secenekleri")
-        sol_sutun, sag_sutun = st.columns(2)
-        
-        for sira, veri in enumerate(magaza_listesi):
-            if sira % 2 == 0:
-                sol_sutun.link_button(veri["ad"], veri["url"], use_container_width=True)
-            else:
-                sag_sutun.link_button(veri["ad"], veri["url"], use_container_width=True)
-    else:
-        st.error("Analiz Hatasi: Gecersiz girdi.")
+        # Doğrulanmış Mağazalar Listesi
+        magaza_listesi =
