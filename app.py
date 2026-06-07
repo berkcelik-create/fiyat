@@ -96,3 +96,7 @@ if arama_tetiklendi and girdi_alani:
             buton_metni = f"{m['logo']} {m['ad']}{ek_etiket}"
             if i % 2 == 0: sol_col.link_button(buton_metni, m['url'], use_container_width=True)
             else: sag_col.link_button(buton_metni, m['url'], use_container_width=True)
+st.write("---")
+with st.expander("🛠️ Teknik Destek & Geri Bildirim"):
+    st.write("Arama sonuçlarında bir mağaza eksikse veya linkler çalışmıyorsa lütfen bize bildirin.")
+    st.button("📧 Geri Bildirim Gönder")
