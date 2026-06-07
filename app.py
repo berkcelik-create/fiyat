@@ -35,12 +35,19 @@ def link_temizle_ve_coz(url):
         link_yolu = parsed_url.path
         ham_kelimeler = re.split(r'[/_\-+.]', link_yolu)
         
+        # Arama sonuçlarını bozan agresif/ekstra teknik kelimeleri eliyoruz
+        engelli_kelimeler = [
+            "html", "urun", "p", "detay", "ara", "geforce", "oc", "overclock", 
+            "v1", "v2", "v3", "v4", "v5", "evo", "pro", "plus", "super", 
+            "gaming", "oyuncu", "rgb", "edition", "se", "white", "black"
+        ]
+        
         filtrelenmis = []
         for k in ham_kelimeler:
             k = k.strip()
             if k.startswith("aaa") and len(k) > 3:
                 k = k[3:]
-            if not k or k in ["html", "urun", "p", "detay", "ara", "geforce"]:
+            if not k or k in engelli_kelimeler:
                 continue
             if k.startswith('u') and any(c.isdigit() for c in k):
                 continue
@@ -64,8 +71,9 @@ if arama_tetiklendi and girdi_alani:
     if arama_turu == "Link Analizi":
         kelimeler = link_temizle_ve_coz(girdi_alani)
     else:
-        # Kullanıcı manuel yazsa bile 'geforce' kelimesini arama optimizasyonu için eliyoruz
-        ham_girdi = [k.strip() for k in girdi_alani.split() if k.strip() and k.lower() != "geforce"]
+        # Manuel aramalarda da 'geforce', 'oc' gibi kelimeleri eliyoruz
+        engelliler = ["geforce", "oc", "overclock", "v2", "gaming"]
+        ham_girdi = [k.strip() for k in girdi_alani.split() if k.strip() and k.lower() not in engelliler]
         kelimeler = ham_girdi[:4]
         
     temiz_list = [guvenli_metin_onar(k) for k in kelimeler if k.strip()]
@@ -76,12 +84,11 @@ if arama_tetiklendi and girdi_alani:
         st.write("Kopyalama Alani:")
         st.code(sonuc_model, language="text")
         
-        # Farklı sitelerin arama motoru varyasyonları için formatlar
         artili_sorgu = "+".join(temiz_list)
         yuzdelik_sorgu = "%20".join(temiz_list)
         normal_sorgu = urllib.parse.quote(" ".join(temiz_list))
         
-        # İncehesap hem rtx 5070 (ayrı) hem de rtx5070 (birleşik) aratıldığında bulabilsin diye akıllı kelime birleştirme:
+        # İncehesap'ın rtx ve 5070'i ayrı veya birleşik bulabilmesi için akıllı birleştirme
         incehesap_list = []
         for i, kelime in enumerate(temiz_list):
             if kelime == "rtx" and i + 1 < len(temiz_list) and temiz_list[i+1].isdigit():
