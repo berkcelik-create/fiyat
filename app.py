@@ -2,43 +2,70 @@ import streamlit as st
 import urllib.parse
 import re
 
-st.set_page_config(page_title="G-ENGINE // Pro", page_icon="⚡", layout="centered")
+st.set_page_config(
+    page_title="G-ENGINE // Hardware Search Engine", 
+    page_icon="🔍", 
+    layout="centered"
+)
 
-st.title("⚡ G-ENGINE // Pro")
-st.caption("Donanım Arama & Karşılaştırma İstasyonu")
+st.title("G-ENGINE")
+st.caption("Hardware Search Engine // Orijinal Arama Motoru")
 st.write("---")
 
-# 1. Arama Bölümü
+arama_turu = st.radio(
+    "Arama Modu:", 
+    ["Link Analizi", "Model İsmi ile Arama"], 
+    horizontal=True
+)
+
 with st.form("arama_formu"):
-    girdi = st.text_input("Model ismi girin:", placeholder="Örn: RTX 5070")
-    arama = st.form_submit_button("Analiz Et", type="primary", use_container_width=True)
+    if arama_turu == "Link Analizi":
+        girdi_alani = st.text_input("Ürün Linkini Girin:", placeholder="https://www.itopya.com/...")
+    else:
+        girdi_alani = st.text_input("Ürün Modelini Girin:", placeholder="Örn: PNY RTX 5070")
+    arama_tetiklendi = st.form_submit_button("Motoru Çalıştır", type="primary", use_container_width=True)
 
-if arama and girdi:
-    temiz = urllib.parse.quote(girdi)
-    st.success(f"Analiz edilen: {girdi.upper()}")
+def link_temizle_ve_coz(url):
+    try:
+        url = url.strip().lower()
+        if not url.startswith(("http://", "https://")): url = "https://" + url
+        parsed_url = urllib.parse.urlparse(urllib.parse.unquote(url))
+        ham = re.split(r'[/_\-+.]', parsed_url.path)
+        
+        engelli = ["html", "urun", "p", "detay", "ara", "geforce", "oc", "overclock", "v2", "gaming", "rgb", "white", "black", "mouse", "kulaklik"]
+        filtrelenmis = [k for k in ham if k and k not in engelli and not (k.startswith('u') and any(c.isdigit() for c in k)) and not (k.isdigit() and len(k) <= 3)]
+        return filtrelenmis[:4] if filtrelenmis else ["donanimi"]
+    except: return ["donanimi"]
+
+def guvenli_metin_onar(metin):
+    return metin.lower().strip().replace("ı", "i").replace("ş", "s").replace("ç", "c").replace("ğ", "g").replace("ü", "u").replace("ö", "o")
+
+if arama_tetiklendi and girdi_alani:
+    if arama_turu == "Link Analizi": kelimeler = link_temizle_ve_coz(girdi_alani)
+    else: kelimeler = [k.strip() for k in girdi_alani.split() if k.strip()][:4]
     
-    # 2. Teknik Özellik ve Karşılaştırma Alanı (Pro Özellik)
-    st.subheader("🔍 Teknik Hızlı Erişim")
-    col1, col2 = st.columns(2)
-    col1.link_button("Teknik Detaylar", f"https://www.techpowerup.com/gpu-specs/?q={temiz}", use_container_width=True)
-    col2.link_button("FPS Karşılaştırma", f"https://www.youtube.com/results?search_query={temiz}+fps+benchmark", use_container_width=True)
+    temiz_list = [guvenli_metin_onar(k) for k in kelimeler if k.strip()]
+    sonuc_model = " ".join(temiz_list).upper()
     
-    # 3. Mağaza Listesi
-    st.subheader("🛒 Mağaza Arama")
+    st.success("Model Basariyla Cozuldu: " + sonuc_model)
+    
+    normal = urllib.parse.quote(" ".join(temiz_list))
+    artili = "+".join(temiz_list)
+    incehesap = "%20".join(temiz_list)
+    
     magazalar = [
-        ("İtopya", f"https://www.itopya.com/ara?bul={temiz}"),
-        ("İncehesap", f"https://www.incehesap.com/arama/?s={temiz.replace('+', '%20')}"),
-        ("Sinerji", f"https://www.sinerji.gen.tr/arama?q={temiz}"),
-        ("Akakçe", f"https://www.akakce.com/arama/?q={temiz}")
+        ("Wraith Esports", f"https://wraithesports.com/search?q={normal}"),
+        ("İncehesap", f"https://www.incehesap.com/arama/?fiyat_kriteri=1&s={incehesap}"),
+        ("İtopya", f"https://www.itopya.com/ara?bul={normal}"),
+        ("Sinerji", f"https://www.sinerji.gen.tr/arama?q={artili}"),
+        ("Trendyol", f"https://www.trendyol.com/sr?q={normal}"),
+        ("Hepsiburada", f"https://www.hepsiburada.com/ara?q={normal}"),
+        ("Amazon TR", f"https://www.amazon.com.tr/s?k={normal}"),
+        ("Akakçe", f"https://www.akakce.com/arama/?q={normal}")
     ]
-    for ad, url in magazalar:
-        st.link_button(ad, url, use_container_width=True)
-
-# 4. Profesyonel Karşılaştırma Matrisi
-st.write("---")
-st.subheader("⚖️ İkili Karşılaştırma Matrisi")
-m1, m2 = st.columns(2)
-a = m1.text_input("Model 1")
-b = m2.text_input("Model 2")
-if st.button("Performans Farkını Göster"):
-    st.link_button("Karşılaştırmayı Başlat", f"https://versus.com/tr/{a}-vs-{b}", use_container_width=True)
+    
+    st.subheader("Mağaza Seçenekleri")
+    col1, col2 = st.columns(2)
+    for i, (ad, url) in enumerate(magazalar):
+        if i % 2 == 0: col1.link_button(ad, url, use_container_width=True)
+        else: col2.link_button(ad, url, use_container_width=True)
