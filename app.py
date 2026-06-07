@@ -30,48 +30,45 @@ with st.form("arama_formu"):
     
     arama_tetiklendi = st.form_submit_button("🔍 Motoru Çalıştır", type="primary", use_container_width=True)
 
-# 🚀 İTOPYA VE TÜM SİTELER İÇİN KESİN ÇÖZÜM LINK TEMİZLEME MOTORU
+# 🚀 İTOPYA %100 ÇÖZÜM: YENİ NESİL KELİME AYIKLAMA ALGORİTMASI
 def gelişmiş_kelime_temizle(url):
     try:
         if not url.startswith("http://") and not url.startswith("https://") and "." not in url:
             return None
             
-        # URL decode işlemi
+        # URL'i decode et (%20 ve Türkçe karakterleri kurtar)
         url_cozulmus = urllib.parse.unquote(url).lower()
         
-        # Query parametrelerini (? ve sonrası) temizle
+        # Query parametrelerini (? ve sonrasını) tamamen kopar
         url_temiz = url_cozulmus.split("?")[0].split("#")[0]
         
-        # Linki "/" işaretlerine göre bölüp en sondaki ürün metni içeren parçayı alalım
-        # E-ticaret sitelerinde ürün adı her zaman domainden sonraki en son kırılımdadır.
-        url_parçalari = [p for p in url_temiz.split("/") if p.strip()]
+        # Gereksiz web protokollerini ve domain uzantılarını temizle
+        url_temiz = re.sub(r'https?://', '', url_temiz)
+        url_temiz = re.sub(r'www\.', '', url_temiz)
         
-        # Eğer linkin en son parçası .html veya saf sayı ise bir önceki parçaya bak
-        hedef_parca = url_parçalari[-1]
-        if (hedef_parca.isdigit() or hedef_parca == "urun" or hedef_parca == "detay") and len(url_parçalari) > 1:
-            hedef_parca = url_parçalari[-2]
-            
-        # Seçilen ürün parçasını tire ve alt tirelere göre kelimelerine ayır
-        parcalar = re.split(r'[_\-+]', hedef_parca)
+        # Linki tüm ayırıcılara göre (slash, tire, alt tire, artı) parçala
+        parcalar = re.split(r'[/_\-+]', url_temiz)
         
+        # Tamamen elenecek çöp ve site adı kelimeleri Havuzu
         yasakli = {
             "html", "urun", "p", "detay", "fiyat", "ozellikleri", "satinal", "gaming", 
-            "oyuncu", "store", "product", "com", "tr", "www", "https", "http", "item", 
-            "shop", "kampanya", "indirim", "firsat", "bilgisayar", "itopya", "vatanbilgisayar",
+            "oyuncu", "store", "product", "com", "net", "tr", "org", "item", "shop", 
+            "kampanya", "indirim", "firsat", "bilgisayar", "itopya", "vatanbilgisayar",
             "sinerji", "incehesap", "trendyol", "hepsiburada", "amazon", "wraithesports"
         }
         
         anlamli_parcalar = []
         for p in parcalar:
-            p_temiz = p.replace(".html", "").strip()
-            # Çöp kelime veya rastgele id kodu değilse listeye ekle
+            p_temiz = p.strip()
+            # Kelime boş değilse, tamamen sayıdan oluşmuyorsa ve yasaklı listede yoksa al
             if len(p_temiz) > 1 and not p_temiz.isdigit() and p_temiz not in yasakli:
-                # u32084 gibi sitelerin bastığı anlamsız kısa ID kodlarını eliyoruz
+                # Sitelerin otomatik bastığı ürün kodlarını (Örn: u32084 veya p234) eliyoruz
                 if not (any(char.isdigit() for char in p_temiz) and len(p_temiz) <= 6):
                     anlamli_parcalar.append(p_temiz)
         
         if anlamli_parcalar:
-            # Marka adıyla başlayan en net ilk 4 kelimeyi birleştiriyoruz
+            # Ürün markası ve modeli her zaman bu listenin ilk kelimeleridir
+            # Arama motorlarının sapıtmaması için en net ilk 4 kelimeyi çekiyoruz
             sonuc_kelimeleri = anlamli_parcalar[:4]
             ham_sonuc = " ".join(sonuc_kelimeleri)
             
@@ -113,39 +110,4 @@ if arama_tetiklendi and girdi_alani:
     else:
         arama_kelimesi_upper = arama_kelimesi.upper()
         
-        st.success(f"🎯 Kriptonize Edilen Model: **{arama_kelimesi_upper}**")
-        
-        # Kopyalama Panosu
-        st.write("📋 Başka yerde aratmak için ismi buradan hızlıca kopyalayabilirsiniz:")
-        st.code(arama_kelimesi_upper, language="text")
-            
-        safe_search = urllib.parse.quote(arama_kelimesi.lower())
-        
-        # Donanım Kontrolü ve Dinamik Mağaza Filtreleme
-        donanim_kelimeleri = ["ekran karti", "islemci", "anakart", "ram", "ssd", "power", "psu", "kasa", "gpu", "cpu", "sivi sogutma", "fan"]
-        is_donanim = any(x in arama_kelimesi.lower() for x in donanim_kelimeleri)
-        
-        tum_magazalar = [
-            {"ad": "Wraith Esports", "url": f"https://wraithesports.com/search?q={safe_search}", "logo": "🚀", "tag": "⭐ En Ucuz Potansiyeli", "tip": "ekipman"},
-            {"ad": "İncehesap", "url": f"https://www.incehesap.com/arama/?fiyat_kriteri=1&s={safe_search}", "logo": "🔥", "tag": "", "tip": "hepsi"},
-            {"ad": "İtopya", "url": f"https://www.itopya.com/Arama?q={safe_search}", "logo": "🦎", "tag": "⭐ En Ucuz Potansiyeli", "tip": "hepsi"},
-            {"ad": "Sinerji", "url": f"https://www.sinerji.gen.tr/arama?q={safe_search}", "logo": "⚡", "tag": "", "tip": "hepsi"},
-            {"ad": "Trendyol", "url": f"https://www.trendyol.com/sr?q={safe_search}", "logo": "🧡", "tag": "", "tip": "hepsi"},
-            {"ad": "Hepsiburada", "url": f"https://www.hepsiburada.com/ara?q={safe_search}", "logo": "💙", "tag": "", "tip": "hepsi"},
-            {"ad": "Amazon TR", "url": f"https://www.amazon.com.tr/s?k={safe_search}", "logo": "💛", "tag": "⭐ En Ucuz Potansiyeli", "tip": "hepsi"},
-            {"ad": "Akakçe", "url": f"https://www.akakce.com/arama/?q={safe_search}", "logo": "🔍", "tag": "📊 Genel Karşılaştırma", "tip": "hepsi"}
-        ]
-        
-        aktif_magazalar = [m for m in tum_magazalar if not (is_donanim and m["tip"] == "ekipman")]
-        
-        st.subheader("🛍️ Mağaza Seçenekleri")
-        sol_col, sag_col = st.columns(2)
-        
-        for i, m in enumerate(aktif_magazalar):
-            ek_etiket = f" ({m['tag']})" if m['tag'] else ""
-            buton_metni = f"{m['logo']} {m['ad']}{ek_etiket}"
-            
-            if i % 2 == 0:
-                sol_col.link_button(buton_metni, m['url'], use_container_width=True)
-            else:
-                sag_col.link_button(buton_metni, m['url'], use_container_width=True)
+        st.success(f"🎯 Kriptonize Edilen Model:
