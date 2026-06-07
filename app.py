@@ -74,17 +74,7 @@ def guvenli_metin_onar(metin):
 
 # --- İşlem ---
 if arama_tetiklendi and girdi_alani:
-    if arama_turu == "Link Analizi": kelimeler = link_temizle_ve_coz(girdi_alani)
-    else: kelimeler = [k.strip() for k in girdi_alani.split() if k.strip()][:4]
-    
-    temiz_list = [guvenli_metin_onar(k) for k in kelimeler if k.strip()]
-    sonuc_model = " ".join(temiz_list).upper()
-    
-    st.success("Model Başarıyla Çözüldü: " + sonuc_model)
-    
-    normal = urllib.parse.quote(" ".join(temiz_list))
-    artili = "+".join(temiz_list)
-    incehesap = "%20".join(temiz_list)
-    
-    magazalar = [
-        ("Wraith Esports", f"
+    if arama_turu == "Link Analizi": 
+        kelimeler = link_temizle_ve_coz(girdi_alani)
+    else: 
+        kelimeler =
