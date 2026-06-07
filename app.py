@@ -10,7 +10,7 @@ st.sidebar.info("G-ENGINE geliştiricisi ile iletişime geçmek için:")
 st.sidebar.link_button("Discord Profilim", "https://discord.com/users/KULLANICI_ID_BURAYA", use_container_width=True)
 st.sidebar.write("---")
 st.sidebar.caption("G-ENGINE v1.0 // Hardware Search")
-)   
+   
 
 
 st.title("G-ENGINE")
