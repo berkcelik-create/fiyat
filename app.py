@@ -23,7 +23,6 @@ with st.form("arama_formu"):
         girdi_alani = st.text_input("Ürün Linkini Girin:", placeholder="https://www.itopya.com/...")
     else:
         girdi_alani = st.text_input("Ürün Modelini Girin:", placeholder="Örn: AMD Ryzen 7 7800X3D")
-    
     arama_tetiklendi = st.form_submit_button("Motoru Çalıştır", type="primary", use_container_width=True)
 
 def link_temizle_ve_kisalt(url):
@@ -31,43 +30,27 @@ def link_temizle_ve_kisalt(url):
         url = url.strip().lower()
         if not url.startswith(("http://", "https://")):
             url = "https://" + url
-            
         cozulmus_url = urllib.parse.unquote(url)
         parsed_url = urllib.parse.urlparse(cozulmus_url)
         link_yolu = parsed_url.path
         ham_kelimeler = re.split(r'[/_\-+.]', link_yolu)
         
-        sistem_copleri = {
-            "html", "urun", "p", "detay", "fiyat", "ozellikleri", "satinal", "gaming", 
-            "oyuncu", "store", "product", "net", "org", "item", "shop", "bilgisayar", "ara"
-        }
-        
-        teknik_copler = {
-            "rgb", "dpi", "hz", "1000hz", "26000", "26000dpi", "mouse", "kulaklik", 
-            "klavye", "kablosuz", "wireless", "kablolu", "siyah", "black", "beyaz", 
-            "white", "opaline", "gray", "gri", "gaming", "oyuncu", "ses", "kart", 
-            "g01", "v01", "m1", "m2", "v60", "aaa", "s", "x", "p"
-        }
+        sistem_copleri = ["html", "urun", "p", "detay", "fiyat", "ozellikleri", "satinal", "gaming", "oyuncu", "store", "product", "net", "org", "item", "shop", "bilgisayar", "ara"]
+        teknik_copler = ["rgb", "dpi", "hz", "1000hz", "26000", "26000dpi", "mouse", "kulaklik", "klavye", "kablosuz", "wireless", "kablolu", "siyah", "black", "beyaz", "white", "opaline", "gray", "gri", "gaming", "oyuncu", "ses", "kart", "g01", "v01", "m1", "m2", "v60", "aaa", "s", "x", "p"]
         
         filtrelenmis = []
         for k in ham_kelimeler:
             k = k.strip()
             if k.startswith("aaa") and len(k) > 3:
                 k = k[3:]
-            if not k:
-                continue
-            if k in sistem_copleri:
-                continue
-            if k in teknik_copler:
-                continue
-            if len(k) <= 1:
+            if len(k) <= 1 or k in sistem_copleri or k in teknik_copler:
                 continue
             if k.startswith('u') and any(c.isdigit() for c in k):
                 continue
             if k.isdigit() and len(k) <= 4:
                 continue
             filtrelenmis.append(k)
-        
+            
         if len(filtrelenmis) > 0:
             return filtrelenmis[:3]
             
@@ -82,12 +65,7 @@ def link_temizle_ve_kisalt(url):
 
 def guvenli_metin_onar(metin):
     metin = metin.lower().strip()
-    metin = metin.replace("ı", "i")
-    metin = metin.replace("ş", "s")
-    metin = metin.replace("ç", "c")
-    metin = metin.replace("ğ", "g")
-    metin = metin.replace("ü", "u")
-    metin = metin.replace("ö", "o")
+    metin = metin.replace("ı", "i").replace("ş", "s").replace("ç", "c").replace("ğ", "g").replace("ü", "u").replace("ö", "o")
     return metin
 
 if arama_tetiklendi and girdi_alani:
@@ -101,7 +79,6 @@ if arama_tetiklendi and girdi_alani:
     
     if temiz_list:
         sonuc_model = " ".join(temiz_list).upper()
-        
         st.success("Model Basariyla Cozuldu ve Kisaltildi: " + sonuc_model)
         st.write("Kopyalama Alani:")
         st.code(sonuc_model, language="text")
@@ -110,21 +87,14 @@ if arama_tetiklendi and girdi_alani:
         safe_search = urllib.parse.quote(sorgu_cumlesi)
         
         magaza_listesi = [
-            {"ad": "Wraith Esports", "url": f"https://wraithesports.com/search?q={safe_search}"},
-            {"ad": "Incehesap", "url": f"https://www.incehesap.com/arama/?fiyat_kriteri=1&s={safe_search}"},
-            {"ad": "Itopya", "url": f"https://www.itopya.com/ara?bul={safe_search}"},
-            {"ad": "Sinerji", "url": f"https://www.sinerji.gen.tr/arama?q={safe_search}"},
-            {"ad": "Trendyol", "url": f"https://www.trendyol.com/sr?q={safe_search}"},
-            {"ad": "Hepsiburada", "url": f"https://www.hepsiburada.com/ara?q={safe_search}"},
-            {"ad": "Amazon TR", "url": f"https://www.amazon.com.tr/s?k={safe_search}"},
-            {"ad": "Akakce", "url": f"https://www.akakce.com/arama/?q={safe_search}"}
+            {"ad": "Wraith Esports", "url": "https://wraithesports.com/search?q=" + safe_search},
+            {"ad": "Incehesap", "url": "https://www.incehesap.com/arama/?fiyat_kriteri=1&s=" + safe_search},
+            {"ad": "Itopya", "url": "https://www.itopya.com/ara?bul=" + safe_search},
+            {"ad": "Sinerji", "url": "https://www.sinerji.gen.tr/arama?q=" + safe_search},
+            {"ad": "Trendyol", "url": "https://www.trendyol.com/sr?q=" + safe_search},
+            {"ad": "Hepsiburada", "url": "https://www.hepsiburada.com/ara?q=" + safe_search},
+            {"ad": "Amazon TR", "url": "https://www.amazon.com.tr/s?k=" + safe_search},
+            {"ad": "Akakce", "url": "https://www.akakce.com/arama/?q=" + safe_search}
         ]
         
         st.subheader("Magaza Secenekleri")
-        sol_sutun, sag_sutun = st.columns(2)
-        
-        for sira, veri in enumerate(magaza_listesi):
-            if sira % 2 == 0:
-                sol_sutun.link_button(veri["ad"], veri["url"], use_container_width=True)
-            else:
-                sag_sutun.link_button(veri["ad"], veri["url"],
