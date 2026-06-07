@@ -40,7 +40,7 @@ def link_temizle_ve_coz(url):
             k = k.strip()
             if k.startswith("aaa") and len(k) > 3:
                 k = k[3:]
-            if not k or k in ["html", "urun", "p", "detay", "ara"]:
+            if not k or k in ["html", "urun", "p", "detay", "ara", "geforce"]:
                 continue
             if k.startswith('u') and any(c.isdigit() for c in k):
                 continue
@@ -64,7 +64,9 @@ if arama_tetiklendi and girdi_alani:
     if arama_turu == "Link Analizi":
         kelimeler = link_temizle_ve_coz(girdi_alani)
     else:
-        kelimeler = [k.strip() for k in girdi_alani.split() if k.strip()][:4]
+        # Kullanıcı manuel yazsa bile 'geforce' kelimesini arama optimizasyonu için eliyoruz
+        ham_girdi = [k.strip() for k in girdi_alani.split() if k.strip() and k.lower() != "geforce"]
+        kelimeler = ham_girdi[:4]
         
     temiz_list = [guvenli_metin_onar(k) for k in kelimeler if k.strip()]
     
@@ -74,17 +76,27 @@ if arama_tetiklendi and girdi_alani:
         st.write("Kopyalama Alani:")
         st.code(sonuc_model, language="text")
         
-        # 🛠️ MAĞAZALARA ÖZEL URL BİRLEŞTİRME MOTORU
-        # Her mağazanın kelime aralarında istediği özel karakteri manuel yönetiyoruz
+        # Farklı sitelerin arama motoru varyasyonları için formatlar
         artili_sorgu = "+".join(temiz_list)
         yuzdelik_sorgu = "%20".join(temiz_list)
         normal_sorgu = urllib.parse.quote(" ".join(temiz_list))
         
+        # İncehesap hem rtx 5070 (ayrı) hem de rtx5070 (birleşik) aratıldığında bulabilsin diye akıllı kelime birleştirme:
+        incehesap_list = []
+        for i, kelime in enumerate(temiz_list):
+            if kelime == "rtx" and i + 1 < len(temiz_list) and temiz_list[i+1].isdigit():
+                incehesap_list.append("rtx" + temiz_list[i+1])
+            elif kelime.isdigit() and i - 1 >= 0 and temiz_list[i-1] == "rtx":
+                continue
+            else:
+                incehesap_list.append(kelime)
+        incehesap_sorgu = "%20".join(incehesap_list)
+        
         magaza_listesi = [
             {"ad": "Wraith Esports", "url": "https://wraithesports.com/search?q=" + normal_sorgu},
-            {"ad": "Incehesap", "url": "https://www.incehesap.com/arama/?fiyat_kriteri=1&s=" + yuzdelik_sorgu}, # İncehesap için özel %20 onarımı yapıldı!
+            {"ad": "Incehesap", "url": "https://www.incehesap.com/arama/?fiyat_kriteri=1&s=" + incehesap_sorgu},
             {"ad": "Itopya", "url": "https://www.itopya.com/ara?bul=" + normal_sorgu},
-            {"ad": "Sinerji", "url": "https://www.sinerji.gen.tr/arama?q=" + artili_sorgu}, # Sinerji için artı onarımı
+            {"ad": "Sinerji", "url": "https://www.sinerji.gen.tr/arama?q=" + artili_sorgu},
             {"ad": "Trendyol", "url": "https://www.trendyol.com/sr?q=" + normal_sorgu},
             {"ad": "Hepsiburada", "url": "https://www.hepsiburada.com/ara?q=" + normal_sorgu},
             {"ad": "Amazon TR", "url": "https://www.amazon.com.tr/s?k=" + normal_sorgu},
