@@ -9,7 +9,7 @@ st.set_page_config(
 )
 
 st.title("G-ENGINE")
-st.caption("Hardware Search Engine // Nokta Atışı Temiz Arama Motoru")
+st.caption("Hardware Search Engine // Stokta Olmayan Siteleri Eleme Motoru")
 st.write("---")
 
 arama_turu = st.radio(
@@ -35,7 +35,6 @@ def link_temizle_ve_coz(url):
         link_yolu = parsed_url.path
         ham_kelimeler = re.split(r'[/_\-+.]', link_yolu)
         
-        # Alakasız sonuçları tetikleyen tüm yan teknik kelimeleri ve çöpleri engelliyoruz
         engelli_kelimeler = [
             "html", "urun", "p", "detay", "ara", "geforce", "oc", "overclock", 
             "v1", "v2", "v3", "v4", "v5", "evo", "pro", "plus", "super", 
@@ -57,7 +56,7 @@ def link_temizle_ve_coz(url):
             filtrelenmis.append(k)
             
         if len(filtrelenmis) > 0:
-            return filtrelenmis[:3] # Sadece en saf ilk 3 kelime (Örn: PNY RTX 5070)
+            return filtrelenmis[:3]
         return ["oyuncu", "donanimi"]
     except:
         return ["oyuncu", "donanimi"]
@@ -80,47 +79,19 @@ if arama_tetiklendi and girdi_alani:
     
     if temiz_list:
         sonuc_model = " ".join(temiz_list).upper()
-        st.success("Nokta Atışı Model Belirlendi: " + sonuc_model)
-        st.write("Kopyalama Alani:")
+        st.success("Nokta Atışı Model Çözüldü: " + sonuc_model)
+        
+        st.write("Kopyalama Alanı:")
         st.code(sonuc_model, language="text")
         
-        # Standart ve Özel Arama Parametreleri
-        artili_sorgu = "+".join(temiz_list)
-        yuzdelik_sorgu = "%20".join(temiz_list)
         normal_sorgu = urllib.parse.quote(" ".join(temiz_list))
         
-        # İncehesap için rtx birleştirme optimizasyonu
-        incehesap_list = []
-        for i, kelime in enumerate(temiz_list):
-            if kelime == "rtx" and i + 1 < len(temiz_list) and temiz_list[i+1].isdigit():
-                incehesap_list.append("rtx" + temiz_list[i+1])
-            elif kelime.isdigit() and i - 1 >= 0 and temiz_list[i-1] == "rtx":
-                continue
-            else:
-                incehesap_list.append(kelime)
-        incehesap_sorgu = "%20".join(incehesap_list)
+        # Sadece stoğu olan ve ürünü gerçekten satan mağazaları listeleyen Akakçe Havuzu
+        akakce_url = "https://www.akakce.com/arama/?q=" + normal_sorgu
         
-        # 🛠️ "EĞER YOKSA ALAKASIZ ŞEYLERİ GÖSTERME" FİLTRE PARAMETRELERİ
-        magaza_listesi = [
-            {"ad": "Wraith Esports", "url": "https://wraithesports.com/search?q=" + normal_sorgu},
-            {"ad": "Incehesap", "url": "https://www.incehesap.com/arama/?fiyat_kriteri=1&s=" + incehesap_sorgu},
-            {"ad": "Itopya", "url": "https://www.itopya.com/ara?bul=" + normal_sorgu},
-            {"ad": "Sinerji", "url": "https://www.sinerji.gen.tr/arama?q=" + artili_sorgu},
-            # Trendyol, Hepsiburada ve Amazon için sadece tam eşleşen resmi satıcıları/modelleri filtrele komutu ekledik
-            {"ad": "Trendyol", "url": "https://www.trendyol.com/sr?q=" + normal_sorgu + "&qt=" + normal_sorgu + "&st=true"},
-            {"ad": "Hepsiburada", "url": "https://www.hepsiburada.com/ara?q=" + normal_sorgu},
-            {"ad": "Amazon TR", "url": "https://www.amazon.com.tr/s?k=" + normal_sorgu + "&ref=nb_sb_noss"},
-            # Akakçe'de alakasız kategorileri tamamen kapatıp direkt saf sonuç listeler
-            {"ad": "Akakce", "url": "https://www.akakce.com/arama/?q=" + normal_sorgu}
-        ]
+        st.subheader("Aktif Mağaza ve Stok Filtresi")
+        st.info("Aşağıdaki buton, aradığın ürünün İncehesap, İtopya, Sinerji gibi sitelerde stokta olup olmadığını kontrol eder ve sadece ürünü satan aktif mağazaları listeler.")
         
-        st.subheader("Mağaza Seçenekleri (Alakasız Sonuçlar Filtrelendi)")
-        sol_sutun, sag_sutun = st.columns(2)
-        
-        for sira, veri in enumerate(magaza_listesi):
-            if sira % 2 == 0:
-                sol_sutun.link_button(veri["ad"], veri["url"], use_container_width=True)
-            else:
-                sag_sutun.link_button(veri["ad"], veri["url"], use_container_width=True)
+        st.link_button("Stokta Olan Mağazaları Göster 🔍", akakce_url, type="primary", use_container_width=True)
     else:
-        st.error("Analiz Hatasi: Gecersiz girdi.")
+        st.error("Analiz Hatası: Geçersiz girdi.")
