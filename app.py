@@ -9,29 +9,6 @@ st.set_page_config(
     layout="centered"
 )
 
-# --- Sarı Tonlarında Modern Arka Plan ---
-st.markdown("""
-    <style>
-    .stApp {
-        background: linear-gradient(135deg, #FFD700, #FFA500, #FF8C00);
-        background-size: 400% 400%;
-        animation: gradient 10s ease infinite;
-    }
-    @keyframes gradient {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
-    }
-    h1, h2, h3, p, label {
-        color: #2e2e2e !important;
-        font-weight: 600;
-    }
-    .stTextInput > div > div > input {
-        background-color: rgba(255, 255, 255, 0.8) !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
 # --- Yan Menü ---
 st.sidebar.title("👤 İletişim")
 st.sidebar.info("G-ENGINE geliştiricisi ile iletişime geçmek için:")
@@ -40,9 +17,19 @@ st.sidebar.write("---")
 st.sidebar.caption("G-ENGINE v1.0 // Hardware Search")
 
 # --- Ana Sayfa ---
-st.title("🔍 G-ENGINE")
+st.title("G-ENGINE")
 st.caption("Hardware Search Engine // Orijinal Arama Motoru")
 st.write("---")
+
+# --- Kullanım Kılavuzu (Eklendi) ---
+with st.expander("ℹ️ G-ENGINE Nasıl Kullanılır?"):
+    st.write("""
+    G-ENGINE, donanım arayışlarınızı hızlandırmak için tasarlandı:
+    1. **Arama Modunu Seçin:** Link üzerinden mi yoksa model ismi yazarak mı arama yapmak istediğinizi seçin.
+    2. **Veriyi Girin:** - *Link Analizi:* Mağazadan kopyaladığınız ürün linkini yapıştırın, motor linki temizleyip arama terimlerini otomatik çıkarsın.
+       - *Model İsmi:* Doğrudan aradığınız donanımı yazın (Örn: RTX 4070).
+    3. **Motoru Çalıştır:** Butona bastığınızda seçili tüm mağazalarda otomatik arama sayfaları açılacaktır.
+    """)
 
 arama_turu = st.radio(
     "Arama Modu:", 
@@ -64,6 +51,7 @@ def link_temizle_ve_coz(url):
         if not url.startswith(("http://", "https://")): url = "https://" + url
         parsed_url = urllib.parse.urlparse(urllib.parse.unquote(url))
         ham = re.split(r'[/_\-+.]', parsed_url.path)
+        
         engelli = ["html", "urun", "p", "detay", "ara", "geforce", "oc", "overclock", "v2", "gaming", "rgb", "white", "black", "mouse", "kulaklik"]
         filtrelenmis = [k for k in ham if k and k not in engelli and not (k.startswith('u') and any(c.isdigit() for c in k)) and not (k.isdigit() and len(k) <= 3)]
         return filtrelenmis[:4] if filtrelenmis else ["donanimi"]
@@ -82,7 +70,7 @@ if arama_tetiklendi and girdi_alani:
     temiz_list = [guvenli_metin_onar(k) for k in kelimeler if k.strip()]
     sonuc_model = " ".join(temiz_list).upper()
     
-    st.success("Model Başarıyla Çözüldü: " + sonuc_model)
+    st.success("Model Basariyla Cozuldu: " + sonuc_model)
     
     normal = urllib.parse.quote(" ".join(temiz_list))
     artili = "+".join(temiz_list)
@@ -90,19 +78,4 @@ if arama_tetiklendi and girdi_alani:
     
     magazalar = [
         ("Wraith Esports", f"https://wraithesports.com/search?q={normal}"),
-        ("İncehesap", f"https://www.incehesap.com/arama/?fiyat_kriteri=1&s={incehesap}"),
-        ("İtopya", f"https://www.itopya.com/ara?bul={normal}"),
-        ("Sinerji", f"https://www.sinerji.gen.tr/arama?q={artili}"),
-        ("Trendyol", f"https://www.trendyol.com/sr?q={normal}"),
-        ("Hepsiburada", f"https://www.hepsiburada.com/ara?q={normal}"),
-        ("Amazon TR", f"https://www.amazon.com.tr/s?k={normal}"),
-        ("Akakçe", f"https://www.akakce.com/arama/?q={normal}")
-    ]
-    
-    st.subheader("Mağaza Seçenekleri")
-    col1, col2 = st.columns(2)
-    for i, (ad, url) in enumerate(magazalar):
-        if i % 2 == 0: 
-            col1.link_button(ad, url, use_container_width=True)
-        else: 
-            col2.link_button(ad, url, use_container_width=True)
+        ("İncehesap",
