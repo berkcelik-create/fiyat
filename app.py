@@ -9,29 +9,14 @@ st.set_page_config(
     layout="centered"
 )
 
-# --- 💬 SAĞ ALT KÖŞE CANLI DESTEK TASARIMI (CSS & HTML) ---
-# Bu kod sitenin orijinal yapısını bozmadan sağ alta şık bir destek formu kenarlığı ekler.
-st.markdown("""
-<style>
-    /* Canlı Destek Butonu ve Kutusu İçin Sabitleme */
-    .destek-container {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        z-index: 9999;
-        font-family: 'Inter', sans-serif;
-    }
-</style>
-""", unsafe_allow_html=True)
-
-# Yeni Arama Motoru Başlık Düzeni
+# Arama Motoru Başlık Düzeni
 st.title("🔍 G-ENGINE")
 st.caption("Hardware Search Engine // Global Donanım Arama ve Doğrulama Motoru")
 st.write("---")
 
 arama_turu = st.radio("Arama Modu:", ["🔗 Link Analizi", "⌨️ Model İsmi ile Arama"], horizontal=True)
 
-# Sadece butona basınca araması için form yapısı (Enter'a basınca tetiklenmez)
+# Sadece butona basınca araması için form yapısı
 with st.form("arama_formu"):
     if arama_turu == "🔗 Link Analizi":
         girdi_alani = st.text_input("Ürün Linkini Girin:", placeholder="https://www.itopya.com/...")
@@ -61,8 +46,8 @@ def gelişmiş_kelime_temizle(url):
 def akilli_metin_duzelt(metin):
     metin = " ".join(metin.split())
     donusum = {"İ": "I", "ı": "i", "Ş": "S", "ş": "s", "Ç": "C", "ç": "c", "Ğ": "G", "ğ": "g", "Ü": "U", "ü": "u", "Ö": "O", "ö": "o"}
-    for kaynak, hedef in donusum.items():
-        metin = metin.replace(kaynak, hedef)
+    for kaynak, placeholder in donusum.items():
+        metin = metin.replace(kaynak, placeholder)
     return metin
 
 # Arama İşlemleri
@@ -124,23 +109,3 @@ if arama_tetiklendi and girdi_alani:
                 sol_col.link_button(buton_metni, m['url'], use_container_width=True)
             else:
                 sag_col.link_button(buton_metni, m['url'], use_container_width=True)
-
-# --- ⚙️ CANLI DESTEK MENÜSÜNÜN ÇALIŞMA MANTIĞI ---
-st.write("---")
-# Alt kısma gizlenmiş lüks bir genişletilebilir alan açıyoruz (Sağ alttaki buton simülasyonu için)
-with st.sidebar:
-    st.subheader("💬 Canlı Destek & Geri Bildirim")
-    st.caption("Sistemle ilgili bir sorun veya öneriniz varsa anında iletebilirsiniz.")
-    
-    with st.form("canli_destek_formu", clear_on_submit=True):
-        destek_isim = st.text_input("Adınız:", placeholder="Örn: Ahmet")
-        destek_eposta = st.text_input("E-Posta Adresiniz:", placeholder="isim@domain.com")
-        destek_mesaj = st.text_area("Mesajınız / Öneriniz:", placeholder="Sistem harika çalışıyor, şunlar da eklenebilir...")
-        
-        destek_gonder = st.form_submit_button("Mesajı İlet 🚀", use_container_width=True)
-        
-        if destek_gonder:
-            if destek_isim and destek_mesaj:
-                st.success("✅ Mesajınız başarıyla iletildi! En kısa sürede incelenecektir.")
-            else:
-                st.warning("⚠️ Lütfen adınızı ve mesajınızı boş bırakmayın.")
