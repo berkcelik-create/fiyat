@@ -30,23 +30,23 @@ with st.form("arama_formu"):
     
     arama_tetiklendi = st.form_submit_button("🔍 Motoru Çalıştır", type="primary", use_container_width=True)
 
-# 🧠 GERÇEK AI TABANLI MODEL AYIKLAMA MOTORU
+# 🧠 BİLEŞEN ODAKLI LINK ÇÖZÜMLEME MOTORU
 def yapay_zeka_link_cozucu(url):
     try:
         if not url.startswith(("http://", "https://")):
             url = "https://" + url
             
-        # URL'i çöz ve analiz edilebilir düz metne dönüştür
+        # URL'i çöz ve küçük harfe çevir
         cozulmus_url = urllib.parse.unquote(url).lower()
         parsed_url = urllib.parse.urlparse(cozulmus_url)
         
-        # Domain ve gereksiz parametreleri ele, sadece ürün patikasını al
+        # Sadece path (yol) kısmını alıyoruz
         link_yolu = parsed_url.path
         
-        # Link karakterlerini temizle ve ham kelimeleri çıkar
+        # Link karakterlerini parçala
         ham_kelimeler = re.split(r'[/_\-+.]', link_yolu)
         
-        # Algoritmik Süzgeç: Web sitesi çöplerini ilk aşamada ayıkla
+        # Web sitesi çöplerini ayıkla (RAM, bileşen adları listeden çıkarıldı!)
         site_copleri = {
             "html", "urun", "p", "detay", "fiyat", "ozellikleri", "satinal", "gaming", 
             "oyuncu", "store", "product", "com", "tr", "net", "org", "item", "shop", 
@@ -58,24 +58,23 @@ def yapay_zeka_link_cozucu(url):
         for k in ham_kelimeler:
             k = k.strip()
             if len(k) > 1 and not k.isdigit() and k not in site_copleri:
-                # E-ticaret sitelerinin otomatik ürettiği u32084 gibi kodları eliyoruz
+                # u32084 gibi otomatik üretilen kodları uçur
                 if not (any(char.isdigit() for char in k) and len(k) <= 7):
                     filtrelenmiş_kelimeler.append(k)
 
-        # 🧠 AI Akıl Yürütme Katmanı: Donanım dünyasındaki global markaları önceliklendir
+        # Global donanım markaları havuzu
         bilinen_markalar = {
             "kingston", "asus", "msi", "gigabyte", "amd", "intel", "nvidia", "corsair", 
             "gskill", "team", "t-force", "samsung", "crucial", "wd", "western", "digital", 
             "seagate", "pny", "zotac", "palit", "gainward", "sapphire", "xfx", "powercolor",
-            "razer", "logitech", "steelseries", "hyperx", "glorious", "corsair", "benq"
+            "razer", "logitech", "steelseries", "hyperx", "glorious", "benq"
         }
         
-        # Eğer filtrelenen kelimelerin başında bilinen bir marka varsa, marka ve yanındaki 2 kelimeyi al
+        # Marka yakalanırsa yanına 2 kelime daha alıp modeli daralt
         for i, kelime in enumerate(filtrelenmiş_kelimeler):
             if kelime in bilinen_markalar:
                 return " ".join(filtrelenmiş_kelimeler[i:i+3])
                 
-        # Eğer bilinen bir marka yakalanamadıysa, en yüksek anlam barındıran ilk 3 kelimeyi döndür
         if filtrelenmiş_kelimeler:
             return " ".join(filtrelenmiş_kelimeler[:3])
             
@@ -83,7 +82,7 @@ def yapay_zeka_link_cozucu(url):
     except:
         return "oyuncu ekipmani"
 
-# Karakter Dönüştürücü ve Stabilizasyon
+# Karakter Onarıcı
 def karakter_onari(metin):
     metin = " ".join(metin.split())
     sozluk = {"İ": "I", "ı": "i", "Ş": "S", "ş": "s", "Ç": "C", "ç": "c", "Ğ": "G", "ğ": "g", "Ü": "U", "ü": "u", "Ö": "O", "ö": "o"}
@@ -91,7 +90,7 @@ def karakter_onari(metin):
         metin = metin.replace(eski, yeni)
     return metin
 
-# Motorun Çalışma Aşaması
+# Motor Çalışma Mantığı
 if arama_tetiklendi and girdi_alani:
     ana_arama_terimi = ""
     
@@ -101,7 +100,6 @@ if arama_tetiklendi and girdi_alani:
         ana_arama_terimi = girdi_alani
         
     if ana_arama_terimi and len(ana_arama_terimi) >= 2:
-        # Metni stabilize et ve büyüt
         ana_arama_terimi = karakter_onari(ana_arama_terimi).upper()
         
         # Sonuç Ekranı
@@ -110,19 +108,23 @@ if arama_tetiklendi and girdi_alani:
         st.write("📋 Başka yerde aratmak için ismi buradan hızlıca kopyalayabilirsiniz:")
         st.code(ana_arama_terimi, language="text")
         
-        # Web siteleri için arama sorgusunu URL standartlarına uyarla
-        url_kodlu_sorgu = urllib.parse.quote(ana_arama_terimi.lower())
+        # 🌟 Standart Boşluklu Encode (Genel Siteler İçin)
+        sorgu_kucuk = ana_arama_terimi.lower()
+        safe_search_normal = urllib.parse.quote(sorgu_kucuk)
         
-        # Dinamik Mağazalar Listesi
+        # 🌟 İtopya Özel Artılı Standart Encode (İtopya'da Arama Yapabilmesi İçin Şart!)
+        safe_search_itopya = sorgu_kucuk.replace(" ", "+")
+        
+        # Mağazalar Listesi (Özel itopya sorgusu entegre edildi)
         magaza_listesi = [
-            {"ad": "Wraith Esports", "url": f"https://wraithesports.com/search?q={url_kodlu_sorgu}", "logo": "🚀", "tag": "⭐ En Ucuz Potansiyeli"},
-            {"ad": "İncehesap", "url": f"https://www.incehesap.com/arama/?fiyat_kriteri=1&s={url_kodlu_sorgu}", "logo": "🔥", "tag": ""},
-            {"ad": "İtopya", "url": f"https://www.itopya.com/Arama?q={url_kodlu_sorgu}", "logo": "🦎", "tag": "⭐ En Ucuz Potansiyeli"},
-            {"ad": "Sinerji", "url": f"https://www.sinerji.gen.tr/arama?q={url_kodlu_sorgu}", "logo": "⚡", "tag": ""},
-            {"ad": "Trendyol", "url": f"https://www.trendyol.com/sr?q={url_kodlu_sorgu}", "logo": "🧡", "tag": ""},
-            {"ad": "Hepsiburada", "url": f"https://www.hepsiburada.com/ara?q={url_kodlu_sorgu}", "logo": "💙", "tag": ""},
-            {"ad": "Amazon TR", "url": f"https://www.amazon.com.tr/s?k={url_kodlu_sorgu}", "logo": "💛", "tag": "⭐ En Ucuz Potansiyeli"},
-            {"ad": "Akakçe", "url": f"https://www.akakce.com/arama/?q={url_kodlu_sorgu}", "logo": "🔍", "tag": "📊 Genel Karşılaştırma"}
+            {"ad": "Wraith Esports", "url": f"https://wraithesports.com/search?q={safe_search_normal}", "logo": "🚀", "tag": "⭐ En Ucuz Potansiyeli"},
+            {"ad": "İncehesap", "url": f"https://www.incehesap.com/arama/?fiyat_kriteri=1&s={safe_search_normal}", "logo": "🔥", "tag": ""},
+            {"ad": "İtopya", "url": f"https://www.itopya.com/Arama?q={safe_search_itopya}", "logo": "🦎", "tag": "⭐ En Ucuz Potansiyeli"},
+            {"ad": "Sinerji", "url": f"https://www.sinerji.gen.tr/arama?q={safe_search_normal}", "logo": "⚡", "tag": ""},
+            {"ad": "Trendyol", "url": f"https://www.trendyol.com/sr?q={safe_search_normal}", "logo": "🧡", "tag": ""},
+            {"ad": "Hepsiburada", "url": f"https://www.hepsiburada.com/ara?q={safe_search_normal}", "logo": "💙", "tag": ""},
+            {"ad": "Amazon TR", "url": f"https://www.amazon.com.tr/s?k={safe_search_normal}", "logo": "💛", "tag": "⭐ En Ucuz Potansiyeli"},
+            {"ad": "Akakçe", "url": f"https://www.akakce.com/arama/?q={safe_search_normal}", "logo": "🔍", "tag": "📊 Genel Karşılaştırma"}
         ]
         
         st.subheader("🛍️ Mağaza Seçenekleri")
