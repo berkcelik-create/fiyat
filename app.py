@@ -1,29 +1,37 @@
 import streamlit as st
 import urllib.parse
 import re
-import time
+import datetime
 
-# Sayfa Ayarları
+# Sayfa Ayarları ve Sekme Emojisi
 st.set_page_config(
-    page_title="G-Find", 
-    page_icon="🥑​", 
+    page_title="G-ENGINE // Hardware Search Engine", 
+    page_icon="🔍", 
     layout="centered"
 )
 
-st.title("G-Find")
-st.caption("Gelişmiş Arama Motoru v7.5")
+# Arama Motoru Başlık Düzeni
+st.title("🔍 G-ENGINE")
+st.caption("Hardware Search Engine // Global Donanım Arama ve Doğrulama Motoru")
 st.write("---")
 
-arama_turu = st.radio("Arama Yöntemi:", ["🔗 Link Analizi", "⌨️ Ürün İsim Arama"], horizontal=True)
+# İki Farklı Net Arama Modu
+arama_turu = st.radio(
+    "Arama Modu:", 
+    ["🔗 Link Analizi", "⌨️ Model İsmi ile Arama"], 
+    horizontal=True
+)
 
+# Ana Arama Form Yapısı
 with st.form("arama_formu"):
     if arama_turu == "🔗 Link Analizi":
-        girdi_alani = st.text_input("Ürün Linkini Yapıştırın:", placeholder="https://www.itopya.com/...")
+        girdi_alani = st.text_input("Ürün Linkini Girin:", placeholder="https://www.itopya.com/...")
     else:
-        girdi_alani = st.text_input("Ürün Modelini Yazın:", placeholder="Örn: Razer Deathadder V3 Pro")
+        girdi_alani = st.text_input("Ürün Modelini Girin:", placeholder="Örn: AMD Ryzen 7 7800X3D")
     
-    arama_tetiklendi = st.form_submit_button("🔍 Fiyatları Karşılaştır", type="primary", use_container_width=True)
+    arama_tetiklendi = st.form_submit_button("🔍 Motoru Çalıştır", type="primary", use_container_width=True)
 
+# Gelişmiş Kelime Temizleme Fonksiyonu
 def gelişmiş_kelime_temizle(url):
     try:
         if not url.startswith("http://") and not url.startswith("https://") and "." not in url:
@@ -34,39 +42,43 @@ def gelişmiş_kelime_temizle(url):
         temiz = [k.replace(".html", "") for k in parcalar if len(k) > 2 and not k.isdigit() and k.lower() not in yasakli]
         if temiz:
             ham_sonuc = " ".join(temiz[:4])
-            return re.sub(r'[^a-zA-Z0-9\s]', '', ham_sonuc).strip()
+            temiz_sonuc = re.sub(r'[^a-zA-Z0-9\s]', '', ham_sonuc)
+            return temiz_sonuc.strip()
         return "Oyuncu Ekipmanı"
     except:
         return "Oyuncu Ekipmanı"
 
+# Akıllı Boşluk Toleransı
 def akilli_metin_duzelt(metin):
     metin = " ".join(metin.split())
     donusum = {"İ": "I", "ı": "i", "Ş": "S", "ş": "s", "Ç": "C", "ç": "c", "Ğ": "G", "ğ": "g", "Ü": "U", "ü": "u", "Ö": "O", "ö": "o"}
-    for kaynak, hedef in donusum.items():
-        metin = metin.replace(kaynak, hedef)
+    for kaynak, placeholder in donusum.items():
+        metin = metin.replace(kaynak, placeholder)
     return metin
 
+# Arama Motorunun Çalıştırılma Aşaması
 if arama_tetiklendi and girdi_alani:
     hata_var = False
     arama_kelimesi = ""
     
-    with st.spinner("🔄 Ürün Modeli Analiz Ediliyor..."):
-        time.sleep(0.5)
-        if arama_turu == "🔗 Link Analizi":
-            sonuc = gelişmiş_kelime_temizle(girdi_alani)
-            if sonuc is None: hata_var = True
-            else: arama_kelimesi = sonuc
+    if arama_turu == "🔗 Link Analizi":
+        sonuc = gelişmiş_kelime_temizle(girdi_alani)
+        if sonuc is None:
+            hata_var = True
         else:
-            arama_kelimesi = girdi_alani
+            arama_kelimesi = sonuc
+    else:
+        arama_kelimesi = girdi_alani
             
     if arama_kelimesi:
         arama_kelimesi = akilli_metin_duzelt(arama_kelimesi)
 
     if hata_var or not arama_kelimesi or len(arama_kelimesi) < 2:
-        st.error("❌ Geçersiz Girdi! Lütfen geçerli bir ürün adı veya doğru bir e-ticaret linki girin.")
+        st.error("❌ Analiz Başarısız. Lütfen girdi formatını kontrol edin.")
     else:
         arama_kelimesi_upper = arama_kelimesi.upper()
-        st.success(f"🎯 Hedef Ürün Belirlendi: **{arama_kelimesi_upper}**")
+        
+        st.success(f"🎯 Kriptonize Edilen Model: **{arama_kelimesi_upper}**")
         st.write("📋 Başka yerde aratmak için ismi buradan hızlıca kopyalayabilirsiniz:")
         st.code(arama_kelimesi_upper, language="text")
             
@@ -74,7 +86,6 @@ if arama_tetiklendi and girdi_alani:
         donanim_kelimeleri = ["ekran karti", "islemci", "anakart", "ram", "ssd", "power", "psu", "kasa", "gpu", "cpu", "sivi sogutma", "fan"]
         is_donanim = any(x in arama_kelimesi.lower() for x in donanim_kelimeleri)
         
-        # HATA DÜZELTİLEN YER (Tırnaklar ve f-string yapısı tamamlandı)
         tum_magazalar = [
             {"ad": "Wraith Esports", "url": f"https://wraithesports.com/search?q={safe_search}", "logo": "🚀", "tag": "⭐ En Ucuz Potansiyeli", "tip": "ekipman"},
             {"ad": "İncehesap", "url": f"https://www.incehesap.com/arama/?fiyat_kriteri=1&s={safe_search}", "logo": "🔥", "tag": "", "tip": "hepsi"},
@@ -94,9 +105,20 @@ if arama_tetiklendi and girdi_alani:
         for i, m in enumerate(aktif_magazalar):
             ek_etiket = f" ({m['tag']})" if m['tag'] else ""
             buton_metni = f"{m['logo']} {m['ad']}{ek_etiket}"
-            if i % 2 == 0: sol_col.link_button(buton_metni, m['url'], use_container_width=True)
-            else: sag_col.link_button(buton_metni, m['url'], use_container_width=True)
+            if i % 2 == 0:
+                sol_col.link_button(buton_metni, m['url'], use_container_width=True)
+            else:
+                sag_col.link_button(buton_metni, m['url'], use_container_width=True)
+
+# Geri Bildirim Bölümü
 st.write("---")
-with st.expander("🛠️ Teknik Destek & Geri Bildirim"):
-    st.write("Arama sonuçlarında bir mağaza eksikse veya linkler çalışmıyorsa lütfen bize bildirin.")
-    st.button("📧 Geri Bildirim Gönder")
+with st.expander("📬 Geri Bildirim & Öneri"):
+    with st.form("geri_bildirim_formu", clear_on_submit=True):
+        kullanici_mesaji = st.text_area("Mesajınızı buraya yazın:")
+        submit = st.form_submit_button("Gönder")
+        
+        if submit and kullanici_mesaji:
+            tarih = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            with open("geribildirimler.txt", "a", encoding="utf-8") as f:
+                f.write(f"[{tarih}] - {kullanici_mesaji}\n")
+            st.success("Mesajınız kaydedildi, teşekkürler!")
