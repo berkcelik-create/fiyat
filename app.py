@@ -30,24 +30,24 @@ with st.form("arama_formu"):
     
     arama_tetiklendi = st.form_submit_button("Motoru Çalıştır", type="primary", use_container_width=True)
 
-# 🛠️ NOKTA ATIŞI LINK ANALİZ MOTORU
+# 🛠️ GELİŞMİŞ SÜZGEÇLİ LINK ANALİZ MOTORU
 def link_analiz_et(url):
     try:
         url = url.strip()
         if not url.startswith(("http://", "https://")):
             url = "https://" + url
             
-        # URL'i decode et ve tamamen küçük harfe çevir
+        # URL'i çöz ve tamamen küçük harfe çevir
         cozulmus_url = urllib.parse.unquote(url).lower()
         parsed_url = urllib.parse.urlparse(cozulmus_url)
         
-        # Sadece saf ürün yolunu alıyoruz
+        # Link yolunu al
         link_yolu = parsed_url.path
         
         # Linki tüm olası ayıraçlara göre kelimelere böl
         ham_kelimeler = re.split(r'[/_\-+.]', link_yolu)
         
-        # Temizlik aşaması
+        # Web sitesi çöp kelime filtre havuzu
         site_copleri = {
             "html", "urun", "p", "detay", "fiyat", "ozellikleri", "satinal", "gaming", 
             "oyuncu", "store", "product", "com", "tr", "net", "org", "item", "shop", 
@@ -59,17 +59,27 @@ def link_analiz_et(url):
         filtrelenmis = []
         for k in ham_kelimeler:
             k = k.strip()
-            if len(k) > 1 and k not in site_copleri:
-                if not (any(char.isdigit() for char in k) and len(k) <= 5 and k.startswith('u')): 
+            # Kelime boş değilse, çöp listesinde değilse ve sadece anlamsız kısa sayılardan ibaret değilse al
+            if k and k not in site_copleri and len(k) > 1:
+                # E-ticaret sitelerinin otomatik ürettiği u32084 benzeri kodları eliyoruz
+                if not (k.startswith('u') and any(char.isdigit() for char in k)):
                     filtrelenmis.append(k)
 
-        # Ana donanım markaları
+        # Global donanım markaları havuzu
         bilinen_markalar = {"kingston", "asus", "msi", "gigabyte", "amd", "intel", "nvidia", "corsair", "gskill", "samsung", "crucial"}
         
-        # Linkin içinde marka varsa, markayı ve peşinden gelen en kritik 3 kelimeyi al (Modeli bozmamak için)
+        # Marka adını yakala ve peşinden gelen modeli temizle
         for i, kelime in enumerate(filtrelenmis):
             if kelime in bilinen_markalar:
-                return filtrelenmis[i:i+4]
+                aday_kelimeler = filtrelenmis[i:i+4]
+                temiz_model = []
+                
+                for sira, ak in enumerate(aday_kelimeler):
+                    # İlk iki kelimeden sonrakiler tamamen sayıysa (örn link sonundaki '43') veya çok kısaysa ekleme
+                    if sira >= 2 and ak.isdigit() and len(ak) <= 3:
+                        continue
+                    temiz_model.append(ak)
+                return temiz_model
                 
         if filtrelenmis:
             return filtrelenmis[:3]
@@ -85,7 +95,7 @@ def karakter_onari(metin):
         metin = metin.replace(eski, yeni)
     return metin.lower().strip()
 
-# Motorun Çalışma Senaryosu
+# Motorun Çalışma Mantığı
 if arama_tetiklendi and girdi_alani:
     kelime_listesi = []
     
@@ -103,7 +113,7 @@ if arama_tetiklendi and girdi_alani:
         st.write("Kopyalama Alani:")
         st.code(gosterim_metni, language="text")
         
-        # 🌟 İTOPYA DAHİL TÜM SİTELER İÇİN EN STABİL PAYLAŞIMLI SEÇENEK (Boşluklu Standart URL)
+        # URL Standartlaştırma (Boşluklu güvenli yapı - Tüm siteler için en stabil yöntem)
         standart_sorgu = " ".join(temiz_kelimeler)
         safe_search = urllib.parse.quote(standart_sorgu)
         
