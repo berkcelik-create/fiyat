@@ -5,13 +5,13 @@ import time
 
 # Sayfa Ayarları
 st.set_page_config(
-    page_title="GamerFinder Pro", 
-    page_icon="🎮", 
+    page_title="G-Find", 
+    page_icon="🥑​", 
     layout="centered"
 )
 
-st.title("🎮 GamerFinder Pro")
-st.caption("Gelişmiş Oyuncu Ekipmanı Arama Motoru v7.5")
+st.title("G-Find")
+st.caption("Gelişmiş Arama Motoru v7.5")
 st.write("---")
 
 arama_turu = st.radio("Arama Yöntemi:", ["🔗 Link Analizi", "⌨️ Ürün İsim Arama"], horizontal=True)
