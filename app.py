@@ -77,4 +77,32 @@ if arama_tetiklendi and girdi_alani:
     if arama_turu == "Link Analizi": 
         kelimeler = link_temizle_ve_coz(girdi_alani)
     else: 
-        kelimeler =
+        kelimeler = [k.strip() for k in girdi_alani.split() if k.strip()][:4]
+    
+    temiz_list = [guvenli_metin_onar(k) for k in kelimeler if k.strip()]
+    sonuc_model = " ".join(temiz_list).upper()
+    
+    st.success("Model Başarıyla Çözüldü: " + sonuc_model)
+    
+    normal = urllib.parse.quote(" ".join(temiz_list))
+    artili = "+".join(temiz_list)
+    incehesap = "%20".join(temiz_list)
+    
+    magazalar = [
+        ("Wraith Esports", f"https://wraithesports.com/search?q={normal}"),
+        ("İncehesap", f"https://www.incehesap.com/arama/?fiyat_kriteri=1&s={incehesap}"),
+        ("İtopya", f"https://www.itopya.com/ara?bul={normal}"),
+        ("Sinerji", f"https://www.sinerji.gen.tr/arama?q={artili}"),
+        ("Trendyol", f"https://www.trendyol.com/sr?q={normal}"),
+        ("Hepsiburada", f"https://www.hepsiburada.com/ara?q={normal}"),
+        ("Amazon TR", f"https://www.amazon.com.tr/s?k={normal}"),
+        ("Akakçe", f"https://www.akakce.com/arama/?q={normal}")
+    ]
+    
+    st.subheader("Mağaza Seçenekleri")
+    col1, col2 = st.columns(2)
+    for i, (ad, url) in enumerate(magazalar):
+        if i % 2 == 0: 
+            col1.link_button(ad, url, use_container_width=True)
+        else: 
+            col2.link_button(ad, url, use_container_width=True)
