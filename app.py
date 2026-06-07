@@ -69,3 +69,12 @@ if arama_tetiklendi and girdi_alani:
     for i, (ad, url) in enumerate(magazalar):
         if i % 2 == 0: col1.link_button(ad, url, use_container_width=True)
         else: col2.link_button(ad, url, use_container_width=True)
+# ... (Önceki mağaza listesi kodun burada bitiyor)
+
+    # İletişim Paneli
+    st.sidebar.title("👤 İletişim & Destek")
+    st.sidebar.info("G-ENGINE geliştiricisi ile iletişime geçmek için:")
+    st.sidebar.link_button("Discord Profilim", "https://discord.com/users/714481744295886990", use_container_width=True)
+  
+    st.sidebar.write("---")
+    st.sidebar.caption("G-ENGINE v1.0 // Hardware Search")
