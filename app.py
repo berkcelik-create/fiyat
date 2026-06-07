@@ -5,13 +5,13 @@ import time
 
 # Sayfa Ayarları ve Sekme Emojisi
 st.set_page_config(
-    page_title="GamerFinder Pro", 
+    page_title="G-Engine", 
     page_icon="🎮", 
     layout="centered"
 )
 
 # Başlık
-st.title("🎮 GamerFinder Pro")
+st.title("🎮 G-Engine")
 st.caption("Gelişmiş Oyuncu Ekipmanı Arama Motoru v7.5")
 st.write("---")
 
