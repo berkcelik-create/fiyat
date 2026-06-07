@@ -21,14 +21,13 @@ st.title("G-ENGINE")
 st.caption("Hardware Search Engine // Orijinal Arama Motoru")
 st.write("---")
 
-# --- Kullanım Kılavuzu (Eklendi) ---
+# --- Kullanım Kılavuzu ---
 with st.expander("ℹ️ G-ENGINE Nasıl Kullanılır?"):
     st.write("""
     G-ENGINE, donanım arayışlarınızı hızlandırmak için tasarlandı:
-    1. **Arama Modunu Seçin:** Link üzerinden mi yoksa model ismi yazarak mı arama yapmak istediğinizi seçin.
-    2. **Veriyi Girin:** - *Link Analizi:* Mağazadan kopyaladığınız ürün linkini yapıştırın, motor linki temizleyip arama terimlerini otomatik çıkarsın.
-       - *Model İsmi:* Doğrudan aradığınız donanımı yazın (Örn: RTX 4070).
-    3. **Motoru Çalıştır:** Butona bastığınızda seçili tüm mağazalarda otomatik arama sayfaları açılacaktır.
+    1. **Arama Modunu Seçin:** Link analizi veya model ismi ile arama yapabilirsiniz.
+    2. **Girdi Girin:** Link veya model ismini girin.
+    3. **Motoru Çalıştır:** Seçili mağazalarda otomatik arama sayfalarını açın.
     """)
 
 arama_turu = st.radio(
@@ -70,7 +69,7 @@ if arama_tetiklendi and girdi_alani:
     temiz_list = [guvenli_metin_onar(k) for k in kelimeler if k.strip()]
     sonuc_model = " ".join(temiz_list).upper()
     
-    st.success("Model Basariyla Cozuldu: " + sonuc_model)
+    st.success("Model Başarıyla Çözüldü: " + sonuc_model)
     
     normal = urllib.parse.quote(" ".join(temiz_list))
     artili = "+".join(temiz_list)
@@ -78,4 +77,17 @@ if arama_tetiklendi and girdi_alani:
     
     magazalar = [
         ("Wraith Esports", f"https://wraithesports.com/search?q={normal}"),
-        ("İncehesap",
+        ("İncehesap", f"https://www.incehesap.com/arama/?fiyat_kriteri=1&s={incehesap}"),
+        ("İtopya", f"https://www.itopya.com/ara?bul={normal}"),
+        ("Sinerji", f"https://www.sinerji.gen.tr/arama?q={artili}"),
+        ("Trendyol", f"https://www.trendyol.com/sr?q={normal}"),
+        ("Hepsiburada", f"https://www.hepsiburada.com/ara?q={normal}"),
+        ("Amazon TR", f"https://www.amazon.com.tr/s?k={normal}"),
+        ("Akakçe", f"https://www.akakce.com/arama/?q={normal}")
+    ]
+    
+    st.subheader("Mağaza Seçenekleri")
+    col1, col2 = st.columns(2)
+    for i, (ad, url) in enumerate(magazalar):
+        if i % 2 == 0: col1.link_button(ad, url, use_container_width=True)
+        else: col2.link_button(ad, url, use_container_width=True)
