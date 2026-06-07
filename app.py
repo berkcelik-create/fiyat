@@ -30,52 +30,52 @@ with st.form("arama_formu"):
     
     arama_tetiklendi = st.form_submit_button("Motoru Çalıştır", type="primary", use_container_width=True)
 
-# 🛠️ TAHMİN BAZLI DEĞİL, KATI KURAL BAZLI DOĞRUDAN MODEL FİLTRESİ
-def saf_model_yakala(url):
+# 🛠️ GÜVENLİ VE TAM ETKİLİ LINK ÇÖZÜCÜ
+def link_temizle_ve_coz(url):
     try:
-        url = urllib.parse.unquote(url).lower()
-        
-        # Sadece URL'in path (yol) kısmını alarak domain gürültülerini (itopya.com, www vb.) tamamen dışarıda bırakıyoruz
-        parsed = urllib.parse.urlparse(url)
-        saf_yol = parsed.path if parsed.path else url
-        
-        # 1. Adım: İşlemci Modeli Yakalama (Örn: 9950x3d, 7800x3d, 12700f, 14900k, 5600x)
-        islemci_deseni = re.search(r'(\d{4,5}[xX]?[3-5]?[dD]?|[iI][3579]-\d{4,5}[kKfF]?[sS]?)', saf_yol)
-        if islemci_deseni:
-            model = islemci_deseni.group(1)
-            # İtopya aramalarında tire işaretleri bazen patlatır, temizleyelim
-            return [model.replace("-", "")]
+        url = url.strip().lower()
+        if not url.startswith(("http://", "https://")):
+            url = "https://" + url
             
-        # 2. Adım: Eğer işlemci değilse, RAM veya Ekipman ismi için genel temizlik yap
-        ham_kelimeler = re.split(r'[/_\-+.]', saf_yol)
-        copler = {
+        cozulmus_url = urllib.parse.unquote(url)
+        parsed_url = urllib.parse.urlparse(cozulmus_url)
+        
+        # Sadece path (yol) kısmını işleyerek domain adını (itopya.com, www) tamamen dışarıda bırakıyoruz
+        link_yolu = parsed_url.path
+        ham_kelimeler = re.split(r'[/_\-+.]', link_yolu)
+        
+        # Web sitelerinin teknik link uzantıları ve çöpleri
+        kesin_copler = {
             "html", "urun", "p", "detay", "fiyat", "ozellikleri", "satinal", "gaming", 
-            "oyuncu", "store", "product", "net", "org", "item", "shop", "bilgisayar",
-            "itopya", "vatanbilgisayar", "sinerji", "incehesap", "trendyol", "hepsiburada", "amazon"
+            "oyuncu", "store", "product", "net", "org", "item", "shop", "bilgisayar"
         }
         
         filtrelenmis = []
         for k in ham_kelimeler:
             k = k.strip()
-            if k and k not in copler and len(k) > 1:
-                # Link sonundaki kimlik numaralarını (u3165, 43 vb.) kesin olarak engelle
+            if k and k not in kesin_copler and len(k) > 1:
+                # Link sonundaki otomatik ID'leri (u3165 vb.) ve çok kısa sayıları eliyoruz
                 if not (k.startswith('u') and any(c.isdigit() for c in k)):
-                    if not (k.isdigit() and len(k) <= 4):
+                    if not (k.isdigit() and len(k) <= 3):
                         filtrelenmis.append(k)
-                        
-        # İtopya'da en yüksek eşleşme oranı için marka hariç en kritik ilk 2 kelimeyi gönderiyoruz
+
+        # Bilinen büyük markaları bulursak öncelik sırasını bozmamak için koruyoruz
+        markalar = {"amd", "intel", "kingston", "asus", "msi", "gigabyte", "corsair", "gskill", "samsung", "crucial"}
+        
+        for i, kelime in enumerate(filtrelenmis):
+            if kelime in markalar:
+                # Markayı ve peşinden gelen en kritik 3 modeli paketle
+                return filtrelenmis[i:i+4]
+                
         if filtrelenmis:
-            for marka in ["kingston", "asus", "msi", "gigabyte", "corsair", "gskill", "samsung"]:
-                if marka in filtrelenmis:
-                    filtrelenmis.remove(marka)
-            return filtrelenmis[:2]
+            return filtrelenmis[:3]
             
         return ["oyuncu", "donanimi"]
     except:
         return ["oyuncu", "donanimi"]
 
-# Hata Riski Sıfır Olan Karakter Onarıcı
-def karakter_duzelt(metin):
+# Güvenli Karakter Onarıcı
+def guvenli_metin_onar(metin):
     metin = metin.lower().strip()
     metin = metin.replace("ı", "i")
     metin = metin.replace("ş", "s")
@@ -85,33 +85,33 @@ def karakter_duzelt(metin):
     metin = metin.replace("ö", "o")
     return metin
 
-# Çalışma Senaryosu
+# Ana Çalışma Mantığı
 if arama_tetiklendi and girdi_alani:
-    sonuc_kelimeleri = []
+    kelimeler = []
     
     if arama_turu == "Link Analizi":
-        sonuc_kelimeleri = saf_model_yakala(girdi_alani)
+        kelimeler = link_temizle_ve_coz(girdi_alani)
     else:
-        sonuc_kelimeleri = [k.strip() for k in girdi_alani.split() if k.strip()]
+        kelimeler = [k.strip() for k in girdi_alani.split() if k.strip()]
         
-    temiz_list = [karakter_duzelt(k) for k in sonuc_kelimeleri if k.strip()]
+    temiz_list = [guvenli_metin_onar(k) for k in kelimeler if k.strip()]
     
     if temiz_list:
-        gosterim = " ".join(temiz_list).upper()
+        sonuc_model = " ".join(temiz_list).upper()
         
-        st.success("Model Basariyla Cozuldu: " + gosterim)
+        st.success("Model Basariyla Cozuldu: " + sonuc_model)
         st.write("Kopyalama Alani:")
-        st.code(gosterim, language="text")
+        st.code(sonuc_model, language="text")
         
-        # Web siteleri için arama terimini encode et
+        # URL kodlaması (Arama motorları uyumluluğu için)
         sorgu_cumlesi = " ".join(temiz_list)
         safe_search = urllib.parse.quote(sorgu_cumlesi)
         
-        # Mağazalar Listesi (Nokta atışı filtrelenmiş kelimeler gider)
+        # Mağazalar Listesi (İtopya '?bul=' parametresi ile güncellendi!)
         magaza_listesi = [
             {"ad": "Wraith Esports", "url": f"https://wraithesports.com/search?q={safe_search}"},
             {"ad": "Incehesap", "url": f"https://www.incehesap.com/arama/?fiyat_kriteri=1&s={safe_search}"},
-            {"ad": "Itopya", "url": f"https://www.itopya.com/Arama?q={safe_search}"},
+            {"ad": "Itopya", "url": f"https://www.itopya.com/ara?bul={safe_search}"},
             {"ad": "Sinerji", "url": f"https://www.sinerji.gen.tr/arama?q={safe_search}"},
             {"ad": "Trendyol", "url": f"https://www.trendyol.com/sr?q={safe_search}"},
             {"ad": "Hepsiburada", "url": f"https://www.hepsiburada.com/ara?q={safe_search}"},
@@ -128,4 +128,4 @@ if arama_tetiklendi and girdi_alani:
             else:
                 sag_sutun.link_button(veri["ad"], veri["url"], use_container_width=True)
     else:
-        st.error("Analiz Hatasi: Girdi icerisinde gecerli bir model kodu tespit edilemedi.")
+        st.error("Analiz Hatasi: Gecersiz girdi.")
