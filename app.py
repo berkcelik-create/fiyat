@@ -30,47 +30,75 @@ with st.form("arama_formu"):
     
     arama_tetiklendi = st.form_submit_button("Motoru Çalıştır", type="primary", use_container_width=True)
 
-# 🧠 REGEX TABANLI DONANIM YAKALAMA MOTORU (Kesin Çözüm)
-def gelişmiş_donanım_yakalayıcı(url):
+# 🧠 GARANTİLİ LINK AYIKLAMA MOTORU
+def link_temizle_ve_coz(url):
     try:
-        url = urllib.parse.unquote(url).lower()
-        
-        # Marka tespiti
-        marka = ""
-        for m in ["amd", "intel", "kingston", "asus", "msi", "gigabyte", "corsair", "gskill", "samsung", "crucial"]:
-            if m in url:
-                marka = m
-                break
-        
-        # Donanım model kalıplarını yakalayan güçlü Regex mimarisi
-        # İşlemci modellerini (örn: 9950x3d, 7800x3d, 12700f, 14900k) cımbızlar
-        islemci_match = re.search(r'(\d{4,5}[xX]?[3-5]?[dD]?\d?|[iI][3579]-\d{4,5}[kKfF]?[sS]?)', url)
-        
-        # RAM/Bellek kalıplarını (örn: ddr5, ddr4, 32gb, 16gb, 6400mhz) cımbızlar
-        ram_match = re.findall(r'(\d{2,3}gb|ddr[45]|\d{4}mhz)', url)
-        
-        sonuc_kelimeleri = []
-        if marka:
-            sonuc_kelimeleri.append(marka)
+        url = url.strip().lower()
+        if not url.startswith(("http://", "https://")):
+            url = "https://" + url
             
-        if islemci_match:
-            sonuc_kelimeleri.append(islemci_match.group(1))
-        elif ram_match:
-            # RAM linkiyse yakalanan ddr ve gb bilgilerini ekle
-            sonuc_kelimeleri.extend(ram_match[:2])
+        cozulmus_url = urllib.parse.unquote(url)
+        parsed_url = urllib.parse.urlparse(cozulmus_url)
+        
+        # Linkin yolunu (path) ve parametrelerini birleştirip kelimelere bölüyoruz
+        ham_metin = parsed_url.netloc + parsed_url.path
+        ham_kelimeler = re.split(r'[/_\-+.]', ham_metin)
+        
+        # Kesinlikle elenecek domain ve protokol çöpleri
+        kesin_copler = {
+            "http", "https", "www", "itopya", "com", "tr", "html", "urun", "p", 
+            "detay", "fiyat", "ozellikleri", "satinal", "gaming", "oyuncu", "store", 
+            "product", "net", "org", "item", "shop", "bilgisayar", "vatanbilgisayar",
+            "sinerji", "incehesap", "trendyol", "hepsiburada", "amazon", "wraithesports"
+        }
+        
+        filtrelenmis = []
+        for k in ham_kelimeler:
+            k = k.strip()
+            if k and k not in kesin_copler and len(k) > 1:
+                # Link sonlarındaki u3165, u32084 gibi otomatik ID'leri ve kısa sayıları uçur
+                if not (k.startswith('u') and any(c.isdigit() for c in k)):
+                    if not (k.isdigit() and len(k) <= 4):
+                        filtrelenmis.append(k)
+
+        # Büyük markaları önceliklendir
+        markalar = {"amd", "intel", "kingston", "asus", "msi", "gigabyte", "corsair", "gskill", "samsung", "crucial"}
+        
+        for i, kelime in enumerate(filtrelenmis):
+            if kelime in markalar:
+                # Markayı bulduğun an yanına en fazla 3 model kelimesi al
+                adaylar = filtrelenmis[i:i+4]
+                return adaylar
+                
+        if filtrelenmis:
+            return filtrelenmis[:3]
             
-        # Eğer özel mimari hiçbir şey yakalayamazsa eski güvenli sisteme dön
-        if len(sonuc_kelimeleri) <= 1:
-            link_yolu = urllib.parse.urlparse(url).path
-            ham_kelimeler = re.split(r'[/_\-+.]', link_yolu)
-            site_copleri = {"html", "urun", "p", "detay", "fiyat", "ozellikleri", "satinal", "gaming", "com", "tr", "itopya", "www", "https"}
-            temiz = [k for k in ham_kelimeler if k and k not in site_copleri and len(k) > 1 and not (k.isdigit() and len(k) <= 3)]
-            return temiz[:3]
-            
-        return sonuc_kelimeleri
+        return ["oyuncu", "ekipmani"]
     except:
         return ["oyuncu", "ekipmani"]
 
-# Karakter Onarıcı
-def karakter_onari(metin):
-    sozluk = {"İ": "i", "ı": "i", "Ş": "s", "ş": "s", "Ç": "c", "ç": "c", "Ğ": "g", "ğ": "g
+# Tırnak Hatası Vermeyen Güvenli Karakter Onarıcı
+def guvenli_metin_onar(metin):
+    metin = metin.lower().strip()
+    # SyntaxError riskini sıfırlamak için tek tek replace yöntemi
+    metin = metin.replace("ı", "i")
+    metin = metin.replace("ş", "s")
+    metin = metin.replace("ç", "c")
+    metin = metin.replace("ğ", "g")
+    metin = metin.replace("ü", "u")
+    metin = metin.replace("ö", "o")
+    return metin
+
+# Ana Çalışma Bloğu
+if arama_tetiklendi and girdi_alani:
+    kelimeler = []
+    
+    if arama_turu == "Link Analizi":
+        kelimeler = link_temizle_ve_coz(girdi_alani)
+    else:
+        kelimeler = [k.strip() for k in girdi_alani.split() if k.strip()]
+        
+    temiz_list = [guvenli_metin_onar(k) for k in kelimeler if k.strip()]
+    
+    if temiz_list:
+        son
