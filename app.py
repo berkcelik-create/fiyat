@@ -10,27 +10,27 @@ st.set_page_config(
 )
 
 # Başlık ve Tasarım Düzeni
-st.title("🔍 G-ENGINE")
+st.title("G-ENGINE")
 st.caption("Hardware Search Engine // Global Donanım Arama ve Doğrulama Motoru")
 st.write("---")
 
 # Seçim Modları
 arama_turu = st.radio(
     "Arama Modu:", 
-    ["🔗 Link Analizi", "⌨️ Model İsmi ile Arama"], 
+    ["Link Analizi", "Model İsmi ile Arama"], 
     horizontal=True
 )
 
 # Arama Formu
 with st.form("arama_formu"):
-    if arama_turu == "🔗 Link Analizi":
+    if arama_turu == "Link Analizi":
         girdi_alani = st.text_input("Ürün Linkini Girin:", placeholder="https://www.itopya.com/...")
     else:
         girdi_alani = st.text_input("Ürün Modelini Girin:", placeholder="Örn: AMD Ryzen 7 7800X3D")
     
-    arama_tetiklendi = st.form_submit_button("🔍 Motoru Çalıştır", type="primary", use_container_width=True)
+    arama_tetiklendi = st.form_submit_button("Motoru Çalıştır", type="primary", use_container_width=True)
 
-# 🛠️ GÜVENLİ LINK ÇÖZÜMLEME MOTORU
+# GÜVENLİ LINK ÇÖZÜMLEME MOTORU
 def link_analiz_et(url):
     try:
         url = url.strip()
@@ -84,7 +84,7 @@ def link_analiz_et(url):
     except:
         return ["oyuncu", "ekipmani"]
 
-# Karakter Onarıcı (Listenin her elemanına uygulanır)
+# Karakter Onarıcı
 def karakter_onari(metin):
     sozluk = {"İ": "i", "ı": "i", "Ş": "s", "ş": "s", "Ç": "c", "ç": "c", "Ğ": "g", "ğ": "g", "Ü": "u", "ü": "u", "Ö": "o", "ö": "o"}
     for eski, yeni in sozluk.items():
@@ -95,20 +95,49 @@ def karakter_onari(metin):
 if arama_tetiklendi and girdi_alani:
     kelime_listesi = []
     
-    if arama_turu == "🔗 Link Analizi":
+    if arama_turu == "Link Analizi":
         kelime_listesi = link_analiz_et(girdi_alani)
     else:
-        # Metin araması yapıldıysa kelimeleri boşluğa göre ayır
         ham_kelimeler = girdi_alani.split()
         kelime_listesi = [k.strip() for k in ham_kelimeler if k.strip()]
         
-    # Kelimeleri Türkçe karakterlerden arındırıp temizleyelim
     temiz_kelimeler = [karakter_onari(k) for k in kelime_listesi if k.strip()]
     
     if temiz_kelimeler:
-        # Ekranda şık görünmesi için kelimeleri birleştirip büyük harfe çeviriyoruz
         gosterim_metni = " ".join(temiz_kelimeler).upper()
         
-        st.success(f"🎯 Kriptonize Edilen Model: **{gosterim_metni}**")
+        # Tırnak hatası riski barındıran tüm f-string emojileri temizlendi
+        st.success("Model Basariyla Cozuldu: " + gosterim_metni)
+        st.write("Kopyalama Alani:")
+        st.code(gosterim_metni, language="text")
         
-        st.write("📋
+        # URL Standartlaştırma
+        standart_sorgu = " ".join(temiz_kelimeler)
+        safe_search_normal = urllib.parse.quote(standart_sorgu)
+        
+        # İtopya için kelimeleri birleşik küçük harf göndererek veritabanı eşleşmesini garantiye alıyoruz
+        itopya_sorgu = "".join(temiz_kelimeler)
+        safe_search_itopya = urllib.parse.quote(itopya_sorgu)
+        
+        # Mağazalar Listesi 
+        magaza_listesi = [
+            {"ad": "Wraith Esports", "url": f"https://wraithesports.com/search?q={safe_search_normal}"},
+            {"ad": "Incehesap", "url": f"https://www.incehesap.com/arama/?fiyat_kriteri=1&s={safe_search_normal}"},
+            {"ad": "Itopya", "url": f"https://www.itopya.com/Arama?q={safe_search_itopya}"},
+            {"ad": "Sinerji", "url": f"https://www.sinerji.gen.tr/arama?q={safe_search_normal}"},
+            {"ad": "Trendyol", "url": f"https://www.trendyol.com/sr?q={safe_search_normal}"},
+            {"ad": "Hepsiburada", "url": f"https://www.hepsiburada.com/ara?q={safe_search_normal}"},
+            {"ad": "Amazon TR", "url": f"https://www.amazon.com.tr/s?k={safe_search_normal}"},
+            {"ad": "Akakce", "url": f"https://www.akakce.com/arama/?q={safe_search_normal}"}
+        ]
+        
+        st.subheader("Magaza Secenekleri")
+        sol_sutun, sag_sutun = st.columns(2)
+        
+        for sira, veri in enumerate(magaza_listesi):
+            if sira % 2 == 0:
+                sol_sutun.link_button(veri["ad"], veri["url"], use_container_width=True)
+            else:
+                sag_sutun.link_button(veri["ad"], veri["url"], use_container_width=True)
+    else:
+        st.error("Analiz Hatasi: Girilen veri okunamadi.")
