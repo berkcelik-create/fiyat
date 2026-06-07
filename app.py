@@ -12,26 +12,20 @@ st.set_page_config(
 # --- Sarı Tonlarında Modern Arka Plan ---
 st.markdown("""
     <style>
-    /* Sarı ve altın tonlarında hareketli arka plan */
     .stApp {
         background: linear-gradient(135deg, #FFD700, #FFA500, #FF8C00);
         background-size: 400% 400%;
         animation: gradient 10s ease infinite;
     }
-    
     @keyframes gradient {
         0% { background-position: 0% 50%; }
         50% { background-position: 100% 50%; }
         100% { background-position: 0% 50%; }
     }
-    
-    /* Yazıların sarı arka planda okunması için siyah renk tonları */
     h1, h2, h3, p, label {
         color: #2e2e2e !important;
         font-weight: 600;
     }
-    
-    /* Input kutusunu belirginleştir */
     .stTextInput > div > div > input {
         background-color: rgba(255, 255, 255, 0.8) !important;
     }
@@ -93,5 +87,4 @@ if arama_tetiklendi and girdi_alani:
     incehesap = "%20".join(temiz_list)
     
     magazalar = [
-        ("Wraith Esports", f"https://wraithesports.com/search?q={normal}"),
-        ("İncehesap", f"https://www.incehesap.com/arama/?fiyat_kriteri=1&s={incehesap}"),
+        ("Wraith Esports", f"
