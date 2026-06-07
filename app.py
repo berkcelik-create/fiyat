@@ -30,41 +30,37 @@ with st.form("arama_formu"):
     
     arama_tetiklendi = st.form_submit_button("🔍 Motoru Çalıştır", type="primary", use_container_width=True)
 
-# 🚀 YENİLENMİŞ GELİŞMİŞ KELİME TEMİZLEME MOTORU
+# Garanti Çalışan Kelime Temizleme Fonksiyonu
 def gelişmiş_kelime_temizle(url):
     try:
         if not url.startswith("http://") and not url.startswith("https://") and "." not in url:
             return None
             
-        # URL çözme işlemi (Türkçe karakterleri ve %20 gibi kodları düzeltir)
-        url = urllib.parse.unquote(url)
+        # URL'deki özel karakterleri çöz (%20'leri boşluk yap vb.)
+        url_cozulmus = urllib.parse.unquote(url)
         
-        # Query parametrelerini (? ve sonrası) ve hashtagleri temizle
-        url_temiz = url.split("?")[0].split("#")[0]
+        # Linkin sadece domainden sonraki ürün ismi geçen kısmını yakala
+        url_temiz = url_cozulmus.split("?")[0].split("#")[0]
         
-        # Linki parçalarına ayır ve temizle
-        parcalar = re.split(r'[/_-]', url_temiz)
+        # Sadece harf, sayı ve boşlukları koruyarak ayır
+        parcalar = re.split(r'[/_\-+]', url_temiz)
         
-        # E-ticaret sitelerinin kullandığı çöp kelimeler listesi
         yasakli = {
             "html", "urun", "p", "detay", "fiyat", "ozellikleri", "satinal", "gaming", 
             "oyuncu", "store", "product", "com", "tr", "www", "https", "http", "item", 
-            "shop", "selling", "kampanya", "indirim", "firsat", "tekno", "bilgisayar"
+            "shop", "kampanya", "indirim", "firsat", "bilgisayar"
         }
         
         temiz = []
         for k in parcalar:
             k_temiz = k.replace(".html", "").strip()
-            # Kelime kontrolü: Sayısal kod değilse, yasaklı listede yoksa ve 2 karakterden uzunsa al
-            if len(k_temiz) > 2 and not k_temiz.isdigit() and k_temiz.lower() not in yasakli:
-                # E-ticaret ID yapılarını temizle (Örn: p-234234 veya om34234 gibi sayı içeren ekler)
-                if not any(char.isdigit() for char in k_temiz) or len(re.sub(r'\d', '', k_temiz)) > 3:
-                    temiz.append(k_temiz)
-                    
+            # Kelime boş değilse, sayısal id değilse ve yasaklı grupta değilse listeye ekle
+            if len(k_temiz) > 1 and not k_temiz.isdigit() and k_temiz.lower() not in yasakli:
+                temiz.append(k_temiz)
+                
         if temiz:
-            # En anlamlı ilk 4 kelimeyi birleştir (Arama motorlarının en sevdiği uzunluk)
-            ham_sonuc = " ".join(temiz[:4])
-            # Özel karakterleri tamamen uçur, sadece harf ve sayı bırak
+            # En kritik kelimeleri birleştirip arama motoru dostu yap
+            ham_sonuc = " ".join(temiz[-4:] if len(temiz) > 4 else temiz)
             temiz_sonuc = re.sub(r'[^a-zA-Z0-9\s]', '', ham_sonuc)
             return temiz_sonuc.strip()
             
@@ -96,3 +92,45 @@ if arama_tetiklendi and girdi_alani:
             
     if arama_kelimesi:
         arama_kelimesi = akilli_metin_duzelt(arama_kelimesi)
+
+    if hata_var or not arama_kelimesi or len(arama_kelimesi) < 2:
+        st.error("❌ Analiz Başarısız. Lütfen girdi formatını kontrol edin.")
+    else:
+        arama_kelimesi_upper = arama_kelimesi.upper()
+        
+        st.success(f"🎯 Kriptonize Edilen Model: **{arama_kelimesi_upper}**")
+        
+        # Kopyalama Panosu
+        st.write("📋 Başka yerde aratmak için ismi buradan hızlıca kopyalayabilirsiniz:")
+        st.code(arama_kelimesi_upper, language="text")
+            
+        safe_search = urllib.parse.quote(arama_kelimesi.lower())
+        
+        # Donanım Kontrolü ve Dinamik Mağaza Filtreleme
+        donanim_kelimeleri = ["ekran karti", "islemci", "anakart", "ram", "ssd", "power", "psu", "kasa", "gpu", "cpu", "sivi sogutma", "fan"]
+        is_donanim = any(x in arama_kelimesi.lower() for x in donanim_kelimeleri)
+        
+        tum_magazalar = [
+            {"ad": "Wraith Esports", "url": f"https://wraithesports.com/search?q={safe_search}", "logo": "🚀", "tag": "⭐ En Ucuz Potansiyeli", "tip": "ekipman"},
+            {"ad": "İncehesap", "url": f"https://www.incehesap.com/arama/?fiyat_kriteri=1&s={safe_search}", "logo": "🔥", "tag": "", "tip": "hepsi"},
+            {"ad": "İtopya", "url": f"https://www.itopya.com/Arama?q={safe_search}", "logo": "🦎", "tag": "⭐ En Ucuz Potansiyeli", "tip": "hepsi"},
+            {"ad": "Sinerji", "url": f"https://www.sinerji.gen.tr/arama?q={safe_search}", "logo": "⚡", "tag": "", "tip": "hepsi"},
+            {"ad": "Trendyol", "url": f"https://www.trendyol.com/sr?q={safe_search}", "logo": "🧡", "tag": "", "tip": "hepsi"},
+            {"ad": "Hepsiburada", "url": f"https://www.hepsiburada.com/ara?q={safe_search}", "logo": "💙", "tag": "", "tip": "hepsi"},
+            {"ad": "Amazon TR", "url": f"https://www.amazon.com.tr/s?k={safe_search}", "logo": "💛", "tag": "⭐ En Ucuz Potansiyeli", "tip": "hepsi"},
+            {"ad": "Akakçe", "url": f"https://www.akakce.com/arama/?q={safe_search}", "logo": "🔍", "tag": "📊 Genel Karşılaştırma", "tip": "hepsi"}
+        ]
+        
+        aktif_magazalar = [m for m in tum_magazalar if not (is_donanim and m["tip"] == "ekipman")]
+        
+        st.subheader("🛍️ Mağaza Seçenekleri")
+        sol_col, sag_col = st.columns(2)
+        
+        for i, m in enumerate(aktif_magazalar):
+            ek_etiket = f" ({m['tag']})" if m['tag'] else ""
+            buton_metni = f"{m['logo']} {m['ad']}{ek_etiket}"
+            
+            if i % 2 == 0:
+                sol_col.link_button(buton_metni, m['url'], use_container_width=True)
+            else:
+                sag_col.link_button(buton_metni, m['url'], use_container_width=True)
