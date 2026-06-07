@@ -1,58 +1,72 @@
 import streamlit as st
 import urllib.parse
-import requests
+import re
 
-st.set_page_config(page_title="G-ENGINE // Pro", page_icon="⚡", layout="centered")
+st.set_page_config(
+    page_title="G-ENGINE // Hardware Search Engine", 
+    page_icon="🔍", 
+    layout="centered"
+)
 
-# --- Fonksiyonlar ---
-def get_dolar_kuru():
-    try:
-        data = requests.get("https://api.exchangerate-api.com/v4/latest/USD").json()
-        return round(data['rates']['TRY'], 2)
-    except: return "N/A"
-
-dolar = get_dolar_kuru()
-
-# --- Arayüz ---
-st.title("⚡ G-ENGINE // Pro")
-st.metric("USD/TRY", f"{dolar} ₺")
+st.title("G-ENGINE")
+st.caption("Hardware Search Engine // Global Donanım Arama Motoru")
 st.write("---")
 
-# 1. Trendler
-st.subheader("🚀 Hızlı Erişim")
-c1, c2 = st.columns(2)
-c1.link_button("Donanım Fırsatları", "https://www.akakce.com/bilgisayar-bilesenleri.html", use_container_width=True)
-c2.link_button("Teknik Spesifikasyonlar", "https://www.techpowerup.com/gpu-specs/", use_container_width=True)
+arama_turu = st.radio(
+    "Arama Modu:", 
+    ["Link Analizi", "Model İsmi ile Arama"], 
+    horizontal=True
+)
 
-st.write("---")
-
-# 2. Karşılaştırma Matrisi (Yenilendi)
-st.subheader("⚖️ Profesyonel Karşılaştırma")
-st.caption("İki modeli yazın, doğrudan karşılaştırma sayfasına gidin.")
-m1, m2 = st.columns(2)
-model_a = m1.text_input("1. Model (Örn: RTX 5070)")
-model_b = m2.text_input("2. Model (Örn: RTX 4070 Ti)")
-
-if st.button("Hızlı Karşılaştır", type="primary", use_container_width=True):
-    if model_a and model_b:
-        # TechPowerUp GPU Karşılaştırma Linki (En doğru sonucu verir)
-        tpu_link = f"https://www.techpowerup.com/gpu-specs/?mfgr=&prepend=&q={model_a}+vs+{model_b}"
-        # Akakçe Fiyat Karşılaştırma Linki
-        akakce_link = f"https://www.akakce.com/karsilastir/?q={model_a}+{model_b}"
-        
-        st.link_button("Teknik Verileri Karşılaştır (TechPowerUp)", tpu_link, use_container_width=True)
-        st.link_button("Fiyatları Karşılaştır (Akakçe)", akakce_link, use_container_width=True)
+with st.form("arama_formu"):
+    if arama_turu == "Link Analizi":
+        girdi_alani = st.text_input("Ürün Linkini Girin:", placeholder="https://www.itopya.com/...")
     else:
-        st.warning("Lütfen karşılaştırmak için iki model ismi de girin.")
+        girdi_alani = st.text_input("Ürün Modelini Girin:", placeholder="Örn: PNY RTX 5070")
+    arama_tetiklendi = st.form_submit_button("Motoru Çalıştır", type="primary", use_container_width=True)
 
-st.write("---")
+def link_temizle_ve_coz(url):
+    try:
+        url = url.strip().lower()
+        if not url.startswith(("http://", "https://")): url = "https://" + url
+        parsed_url = urllib.parse.urlparse(urllib.parse.unquote(url))
+        ham = re.split(r'[/_\-+.]', parsed_url.path)
+        
+        engelli = ["html", "urun", "p", "detay", "ara", "geforce", "oc", "overclock", "v2", "gaming", "rgb", "white", "black", "mouse", "kulaklik"]
+        filtrelenmis = [k for k in ham if k and k not in engelli and not (k.startswith('u') and any(c.isdigit() for c in k)) and not (k.isdigit() and len(k) <= 3)]
+        return filtrelenmis[:4] if filtrelenmis else ["donanimi"]
+    except: return ["donanimi"]
 
-# 3. Mağaza Arama (Önceki başarılı mantık)
-st.subheader("🛒 Mağaza Arama")
-girdi = st.text_input("Arama:", placeholder="Model ismi girin...")
-if st.button("Mağazalarda Ara"):
-    if girdi:
-        normal = urllib.parse.quote(girdi)
-        st.link_button("İtopya'da Ara", f"https://www.itopya.com/ara?bul={normal}", use_container_width=True)
-        st.link_button("İncehesap'ta Ara", f"https://www.incehesap.com/arama/?s={normal.replace(' ', '%20')}", use_container_width=True)
-        st.link_button("Akakçe'de Ara", f"https://www.akakce.com/arama/?q={normal}", use_container_width=True)
+def guvenli_metin_onar(metin):
+    return metin.lower().strip().replace("ı", "i").replace("ş", "s").replace("ç", "c").replace("ğ", "g").replace("ü", "u").replace("ö", "o")
+
+if arama_tetiklendi and girdi_alani:
+    if arama_turu == "Link Analizi": kelimeler = link_temizle_ve_coz(girdi_alani)
+    else: kelimeler = [k.strip() for k in girdi_alani.split() if k.strip()][:4]
+    
+    temiz_list = [guvenli_metin_onar(k) for k in kelimeler if k.strip()]
+    sonuc_model = " ".join(temiz_list).upper()
+    
+    st.success("Model Basariyla Cozuldu: " + sonuc_model)
+    st.code(sonuc_model, language="text")
+    
+    normal = urllib.parse.quote(" ".join(temiz_list))
+    artili = "+".join(temiz_list)
+    incehesap = "%20".join(temiz_list)
+    
+    magazalar = [
+        ("Wraith Esports", f"https://wraithesports.com/search?q={normal}"),
+        ("İncehesap", f"https://www.incehesap.com/arama/?fiyat_kriteri=1&s={incehesap}"),
+        ("İtopya", f"https://www.itopya.com/ara?bul={normal}"),
+        ("Sinerji", f"https://www.sinerji.gen.tr/arama?q={artili}"),
+        ("Trendyol", f"https://www.trendyol.com/sr?q={normal}"),
+        ("Hepsiburada", f"https://www.hepsiburada.com/ara?q={normal}"),
+        ("Amazon TR", f"https://www.amazon.com.tr/s?k={normal}"),
+        ("Akakçe", f"https://www.akakce.com/arama/?q={normal}")
+    ]
+    
+    st.subheader("Mağaza Seçenekleri")
+    col1, col2 = st.columns(2)
+    for i, (ad, url) in enumerate(magazalar):
+        if i % 2 == 0: col1.link_button(ad, url, use_container_width=True)
+        else: col2.link_button(ad, url, use_container_width=True)
