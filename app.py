@@ -62,7 +62,7 @@ def link_temizle_ve_kisalt(url):
         for k in ham_kelimeler:
             k = k.strip()
             
-            # 'aaa' gibi sinerji gürültülerini baştan kırp
+            # Sinerji veya benzeri yerlerdeki 'aaa' gibi yapay gürültüleri temizle
             if k.startswith("aaa") and len(k) > 3:
                 k = k[3:]
                 
@@ -74,47 +74,5 @@ def link_temizle_ve_kisalt(url):
         
         # Eğer filtreleme çok sert olduysa ve kelime kalmadıysa, teknik çöplerin ilk 3'ünü geri yükle
         if not filtrelenmis:
-            gecici = [k for k in ham_kelimeler if k and k not in sistem_copleri and len(k) > 1]
+            gecici = [x for x in ham_kelimeler if x and x not in sistem_copleri and len(x) > 1]
             return gecici[:3]
-            
-        # Mağazalarda en iyi arama sonucu için temizlenmiş ilk 3 anahtar kelimeyi döndür
-        return filtrelenmis[:3]
-    except:
-        return ["oyuncu", "donanimi"]
-
-# Güvenli Karakter Onarıcı
-def guvenli_metin_onar(metin):
-    metin = metin.lower().strip()
-    metin = metin.replace("ı", "i")
-    metin = metin.replace("ş", "s")
-    metin = metin.replace("ç", "c")
-    metin = metin.replace("ğ", "g")
-    metin = metin.replace("ü", "u")
-    metin = metin.replace("ö", "o")
-    return metin
-
-# Ana Çalışma Mantığı
-if arama_tetiklendi and girdi_alani:
-    kelimeler = []
-    
-    if arama_turu == "Link Analizi":
-        kelimeler = link_temizle_ve_kisalt(girdi_alani)
-    else:
-        # Manuel aramalarda kullanıcının yazdığı ilk 3 kelimeyi baz alarak kısaltma yapıyoruz
-        kelimeler = [k.strip() for k in girdi_alani.split() if k.strip()][:3]
-        
-    temiz_list = [guvenli_metin_onar(k) for k in kelimeler if k.strip()]
-    
-    if temiz_list:
-        sonuc_model = " ".join(temiz_list).upper()
-        
-        st.success("Model Basariyla Cozuldu ve Kisaltildi: " + sonuc_model)
-        st.write("Kopyalama Alani:")
-        st.code(sonuc_model, language="text")
-        
-        # URL Formatlama
-        sorgu_cumlesi = " ".join(temiz_list)
-        safe_search = urllib.parse.quote(sorgu_cumlesi)
-        
-        # Doğrulanmış Mağazalar Listesi
-        magaza_listesi =
