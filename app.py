@@ -3,10 +3,15 @@ import urllib.parse
 import re
 
 st.set_page_config(
-    page_title="G-ENGINE // Hardware Search Engine", 
-    page_icon="🔍", 
-    layout="centered"
-)
+# --- Yan Menü (İletişim Bilgileri) ---
+st.sidebar.title("👤 İletişim")
+st.sidebar.info("G-ENGINE geliştiricisi ile iletişime geçmek için:")
+# Discord profil linkini buraya ekle
+st.sidebar.link_button("Discord Profilim", "https://discord.com/users/KULLANICI_ID_BURAYA", use_container_width=True)
+st.sidebar.write("---")
+st.sidebar.caption("G-ENGINE v1.0 // Hardware Search")
+)   
+
 
 st.title("G-ENGINE")
 st.caption("Hardware Search Engine // Orijinal Arama Motoru")
