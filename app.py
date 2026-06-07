@@ -124,3 +124,6 @@ with st.expander("ℹ️ G-ENGINE Nasıl Kullanılır?"):
     
     *İpucu: Eğer aradığınız bir donanım ise, "Kriptonize Edilen Model" ismini kopyalayıp diğer sitelerde de aratabilirsiniz.*
     """)
+# Streamlit'in kendi tema ayarlarından veya 
+# st.toggle ile kullanıcıya renk modu seçeneği sunabilirsiniz.
+tema_secimi = st.toggle("🌙 Karanlık Modu Aç/Kapat")
