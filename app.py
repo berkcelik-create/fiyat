@@ -89,6 +89,28 @@ if arama_tetiklendi and girdi_alani:
         donanim_kelimeleri = ["ekran karti", "islemci", "anakart", "ram", "ssd", "power", "psu", "kasa", "gpu", "cpu", "sivi sogutma", "fan"]
         is_donanim = any(x in arama_kelimesi.lower() for x in donanim_kelimeleri)
         
+        # Hatalı f-string satırı tamamen düzeltildi
         tum_magazalar = [
             {"ad": "Wraith Esports", "url": f"https://wraithesports.com/search?q={safe_search}", "logo": "🚀", "tag": "⭐ En Ucuz Potansiyeli", "tip": "ekipman"},
-            {"ad": "İncehesap", "url": f"https
+            {"ad": "İncehesap", "url": f"https://www.incehesap.com/arama/?fiyat_kriteri=1&s={safe_search}", "logo": "🔥", "tag": "", "tip": "hepsi"},
+            {"ad": "İtopya", "url": f"https://www.itopya.com/Arama?q={safe_search}", "logo": "🦎", "tag": "⭐ En Ucuz Potansiyeli", "tip": "hepsi"},
+            {"ad": "Sinerji", "url": f"https://www.sinerji.gen.tr/arama?q={safe_search}", "logo": "⚡", "tag": "", "tip": "hepsi"},
+            {"ad": "Trendyol", "url": f"https://www.trendyol.com/sr?q={safe_search}", "logo": "🧡", "tag": "", "tip": "hepsi"},
+            {"ad": "Hepsiburada", "url": f"https://www.hepsiburada.com/ara?q={safe_search}", "logo": "💙", "tag": "", "tip": "hepsi"},
+            {"ad": "Amazon TR", "url": f"https://www.amazon.com.tr/s?k={safe_search}", "logo": "💛", "tag": "⭐ En Ucuz Potansiyeli", "tip": "hepsi"},
+            {"ad": "Akakçe", "url": f"https://www.akakce.com/arama/?q={safe_search}", "logo": "🔍", "tag": "📊 Genel Karşılaştırma", "tip": "hepsi"}
+        ]
+        
+        aktif_magazalar = [m for m in tum_magazalar if not (is_donanim and m["tip"] == "ekipman")]
+        
+        st.subheader("🛍️ Mağaza Seçenekleri")
+        sol_col, sag_col = st.columns(2)
+        
+        for i, m in enumerate(aktif_magazalar):
+            ek_etiket = f" ({m['tag']})" if m['tag'] else ""
+            buton_metni = f"{m['logo']} {m['ad']}{ek_etiket}"
+            
+            if i % 2 == 0:
+                sol_col.link_button(buton_metni, m['url'], use_container_width=True)
+            else:
+                sag_col.link_button(buton_metni, m['url'], use_container_width=True)
