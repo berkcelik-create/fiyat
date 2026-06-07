@@ -2,13 +2,25 @@ import streamlit as st
 import urllib.parse
 import re
 
+# --- Sayfa Yapılandırması ---
 st.set_page_config(
     page_title="G-ENGINE // Hardware Search Engine", 
     page_icon="🔍", 
     layout="centered"
 )
 
-# --- Yan Menü (İletişim Bilgileri) ---
+# --- Modern Arka Plan Efekti ---
+st.markdown("""
+    <style>
+    .stApp {
+        background: linear-gradient(-45deg, #0f0f0f, #1a1a1a, #000000, #111111);
+        background-size: 400% 400%;
+        animation: gradient 15s ease infinite;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+# --- Yan Menü ---
 st.sidebar.title("👤 İletişim")
 st.sidebar.info("G-ENGINE geliştiricisi ile iletişime geçmek için:")
 st.sidebar.link_button("Discord Profilim", "https://discord.com/users/714481744295886990", use_container_width=True)
