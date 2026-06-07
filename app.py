@@ -30,7 +30,7 @@ with st.form("arama_formu"):
     
     arama_tetiklendi = st.form_submit_button("Motoru Çalıştır", type="primary", use_container_width=True)
 
-# 🧠 GARANTİLİ LINK AYIKLAMA MOTORU
+# 🧠 NOKTA ATIŞI DOMAIN VE PROTOKOL TEMİZLEME MOTORU
 def link_temizle_ve_coz(url):
     try:
         url = url.strip().lower()
@@ -40,11 +40,11 @@ def link_temizle_ve_coz(url):
         cozulmus_url = urllib.parse.unquote(url)
         parsed_url = urllib.parse.urlparse(cozulmus_url)
         
-        # Linkin yolunu (path) ve parametrelerini birleştirip kelimelere bölüyoruz
+        # netloc (domain) ve path kısımlarını tamamen ayırarak analiz ediyoruz
         ham_metin = parsed_url.netloc + parsed_url.path
         ham_kelimeler = re.split(r'[/_\-+.]', ham_metin)
         
-        # Kesinlikle elenecek domain ve protokol çöpleri
+        # Arama terimini kirleten tüm web ve domain takıları
         kesin_copler = {
             "http", "https", "www", "itopya", "com", "tr", "html", "urun", "p", 
             "detay", "fiyat", "ozellikleri", "satinal", "gaming", "oyuncu", "store", 
@@ -56,19 +56,18 @@ def link_temizle_ve_coz(url):
         for k in ham_kelimeler:
             k = k.strip()
             if k and k not in kesin_copler and len(k) > 1:
-                # Link sonlarındaki u3165, u32084 gibi otomatik ID'leri ve kısa sayıları uçur
+                # Link sonuna eklenen otomatik ID ve kısa sayı çöplerini eliyoruz
                 if not (k.startswith('u') and any(c.isdigit() for c in k)):
                     if not (k.isdigit() and len(k) <= 4):
                         filtrelenmis.append(k)
 
-        # Büyük markaları önceliklendir
+        # Bilinen donanım markalarını tespit edip önceliklendirme
         markalar = {"amd", "intel", "kingston", "asus", "msi", "gigabyte", "corsair", "gskill", "samsung", "crucial"}
         
         for i, kelime in enumerate(filtrelenmis):
             if kelime in markalar:
-                # Markayı bulduğun an yanına en fazla 3 model kelimesi al
-                adaylar = filtrelenmis[i:i+4]
-                return adaylar
+                # Markadan başlayarak en kritik model verilerini paketle
+                return filtrelenmis[i:i+4]
                 
         if filtrelenmis:
             return filtrelenmis[:3]
@@ -77,10 +76,9 @@ def link_temizle_ve_coz(url):
     except:
         return ["oyuncu", "ekipmani"]
 
-# Tırnak Hatası Vermeyen Güvenli Karakter Onarıcı
+# Karakter Onarıcı
 def guvenli_metin_onar(metin):
     metin = metin.lower().strip()
-    # SyntaxError riskini sıfırlamak için tek tek replace yöntemi
     metin = metin.replace("ı", "i")
     metin = metin.replace("ş", "s")
     metin = metin.replace("ç", "c")
@@ -101,4 +99,15 @@ if arama_tetiklendi and girdi_alani:
     temiz_list = [guvenli_metin_onar(k) for k in kelimeler if k.strip()]
     
     if temiz_list:
-        son
+        sonuc_model = " ".join(temiz_list).upper()
+        
+        st.success("Model Basariyla Cozuldu: " + sonuc_model)
+        st.write("Kopyalama Alani:")
+        st.code(sonuc_model, language="text")
+        
+        # URL Standartlaştırma (Aralarında düzgünce boşluk olan en kararlı arama biçimi)
+        sorgu_cumlesi = " ".join(temiz_list)
+        safe_search = urllib.parse.quote(sorgu_cumlesi)
+        
+        # Mağazalar Listesi
+        magaza_listesi =
