@@ -30,27 +30,30 @@ with st.form("arama_formu"):
     
     arama_tetiklendi = st.form_submit_button("🔍 Motoru Çalıştır", type="primary", use_container_width=True)
 
-# 🤖 GELİŞMİŞ LINK TEMİZLEME VE AI FİLTRELEME MOTORU
+# 🚀 İTOPYA VE TÜM SİTELER İÇİN KESİN ÇÖZÜM LINK TEMİZLEME MOTORU
 def gelişmiş_kelime_temizle(url):
     try:
         if not url.startswith("http://") and not url.startswith("https://") and "." not in url:
             return None
             
-        # URL'i decode et (%20, %30 temizliği)
+        # URL decode işlemi
         url_cozulmus = urllib.parse.unquote(url).lower()
         
-        # Linkin sonundaki parametreleri (? ve sonrası) tamamen kopar
+        # Query parametrelerini (? ve sonrası) temizle
         url_temiz = url_cozulmus.split("?")[0].split("#")[0]
         
-        # 🌟 KRİTİK FİLTRE: Linkin başındaki domain, protokol ve uzantı kalıplarını regex ile tamamen kazı!
-        url_temiz = re.sub(r'https?://', '', url_temiz)
-        url_temiz = re.sub(r'www\.', '', url_temiz)
-        url_temiz = re.sub(r'^[a-zA-Z0-9\-]+\.(com|net|org|edu|gov|co|io|com\.tr|org\.tr|net\.tr)/?', '', url_temiz)
+        # Linki "/" işaretlerine göre bölüp en sondaki ürün metni içeren parçayı alalım
+        # E-ticaret sitelerinde ürün adı her zaman domainden sonraki en son kırılımdadır.
+        url_parçalari = [p for p in url_temiz.split("/") if p.strip()]
         
-        # Siteden geriye kalan saf yolu (path) bölümlere ayır
-        parcalar = re.split(r'[/_\-+]', url_temiz)
+        # Eğer linkin en son parçası .html veya saf sayı ise bir önceki parçaya bak
+        hedef_parca = url_parçalari[-1]
+        if (hedef_parca.isdigit() or hedef_parca == "urun" or hedef_parca == "detay") and len(url_parçalari) > 1:
+            hedef_parca = url_parçalari[-2]
+            
+        # Seçilen ürün parçasını tire ve alt tirelere göre kelimelerine ayır
+        parcalar = re.split(r'[_\-+]', hedef_parca)
         
-        # Tamamen yasaklanacak kelimeler kelime havuzu
         yasakli = {
             "html", "urun", "p", "detay", "fiyat", "ozellikleri", "satinal", "gaming", 
             "oyuncu", "store", "product", "com", "tr", "www", "https", "http", "item", 
@@ -61,14 +64,14 @@ def gelişmiş_kelime_temizle(url):
         anlamli_parcalar = []
         for p in parcalar:
             p_temiz = p.replace(".html", "").strip()
-            # Çöp kelime, saf sayı veya site adı değilse listeye ekle
+            # Çöp kelime veya rastgele id kodu değilse listeye ekle
             if len(p_temiz) > 1 and not p_temiz.isdigit() and p_temiz not in yasakli:
-                # E-ticaret sitelerinin ürettiği kısa kodları (Örn: u32084) uçur
+                # u32084 gibi sitelerin bastığı anlamsız kısa ID kodlarını eliyoruz
                 if not (any(char.isdigit() for char in p_temiz) and len(p_temiz) <= 6):
                     anlamli_parcalar.append(p_temiz)
         
         if anlamli_parcalar:
-            # Marka ve model linkin en başında başladığı için ilk 4 kelimeyi çekiyoruz
+            # Marka adıyla başlayan en net ilk 4 kelimeyi birleştiriyoruz
             sonuc_kelimeleri = anlamli_parcalar[:4]
             ham_sonuc = " ".join(sonuc_kelimeleri)
             
