@@ -74,18 +74,21 @@ if arama_tetiklendi and girdi_alani:
         st.write("Kopyalama Alani:")
         st.code(sonuc_model, language="text")
         
-        sorgu_cumlesi = " ".join(temiz_list)
-        safe_search = urllib.parse.quote(sorgu_cumlesi)
+        # 🛠️ MAĞAZALARA ÖZEL URL BİRLEŞTİRME MOTORU
+        # Her mağazanın kelime aralarında istediği özel karakteri manuel yönetiyoruz
+        artili_sorgu = "+".join(temiz_list)
+        yuzdelik_sorgu = "%20".join(temiz_list)
+        normal_sorgu = urllib.parse.quote(" ".join(temiz_list))
         
         magaza_listesi = [
-            {"ad": "Wraith Esports", "url": "https://wraithesports.com/search?q=" + safe_search},
-            {"ad": "Incehesap", "url": "https://www.incehesap.com/arama/?fiyat_kriteri=1&s=" + safe_search},
-            {"ad": "Itopya", "url": "https://www.itopya.com/ara?bul=" + safe_search},
-            {"ad": "Sinerji", "url": "https://www.sinerji.gen.tr/arama?q=" + safe_search},
-            {"ad": "Trendyol", "url": "https://www.trendyol.com/sr?q=" + safe_search},
-            {"ad": "Hepsiburada", "url": "https://www.hepsiburada.com/ara?q=" + safe_search},
-            {"ad": "Amazon TR", "url": "https://www.amazon.com.tr/s?k=" + safe_search},
-            {"ad": "Akakce", "url": "https://www.akakce.com/arama/?q=" + safe_search}
+            {"ad": "Wraith Esports", "url": "https://wraithesports.com/search?q=" + normal_sorgu},
+            {"ad": "Incehesap", "url": "https://www.incehesap.com/arama/?fiyat_kriteri=1&s=" + yuzdelik_sorgu}, # İncehesap için özel %20 onarımı yapıldı!
+            {"ad": "Itopya", "url": "https://www.itopya.com/ara?bul=" + normal_sorgu},
+            {"ad": "Sinerji", "url": "https://www.sinerji.gen.tr/arama?q=" + artili_sorgu}, # Sinerji için artı onarımı
+            {"ad": "Trendyol", "url": "https://www.trendyol.com/sr?q=" + normal_sorgu},
+            {"ad": "Hepsiburada", "url": "https://www.hepsiburada.com/ara?q=" + normal_sorgu},
+            {"ad": "Amazon TR", "url": "https://www.amazon.com.tr/s?k=" + normal_sorgu},
+            {"ad": "Akakce", "url": "https://www.akakce.com/arama/?q=" + normal_sorgu}
         ]
         
         st.subheader("Magaza Secenekleri")
