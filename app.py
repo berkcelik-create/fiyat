@@ -25,7 +25,7 @@ with st.form("arama_formu"):
         girdi_alani = st.text_input("Ürün Modelini Girin:", placeholder="Örn: AMD Ryzen 7 7800X3D")
     arama_tetiklendi = st.form_submit_button("Motoru Çalıştır", type="primary", use_container_width=True)
 
-def link_temizle_ve_kisalt(url):
+def link_temizle_ve_coz(url):
     try:
         url = url.strip().lower()
         if not url.startswith(("http://", "https://")):
@@ -35,23 +35,21 @@ def link_temizle_ve_kisalt(url):
         link_yolu = parsed_url.path
         ham_kelimeler = re.split(r'[/_\-+.]', link_yolu)
         
-        sistem_copleri = ["html", "urun", "p", "detay", "fiyat", "ozellikleri", "satinal", "gaming", "oyuncu", "store", "product", "net", "org", "item", "shop", "bilgisayar", "ara"]
-        
         filtrelenmis = []
         for k in ham_kelimeler:
             k = k.strip()
             if k.startswith("aaa") and len(k) > 3:
                 k = k[3:]
-            if not k or k in sistem_copleri or len(k) <= 1:
+            if not k or k in ["html", "urun", "p", "detay", "ara"]:
                 continue
             if k.startswith('u') and any(c.isdigit() for c in k):
                 continue
-            if k.isdigit() and len(k) <= 4:
+            if k.isdigit() and len(k) <= 3:
                 continue
             filtrelenmis.append(k)
             
         if len(filtrelenmis) > 0:
-            return filtrelenmis[:3]
+            return filtrelenmis[:4]
         return ["oyuncu", "donanimi"]
     except:
         return ["oyuncu", "donanimi"]
@@ -64,15 +62,15 @@ def guvenli_metin_onar(metin):
 if arama_tetiklendi and girdi_alani:
     kelimeler = []
     if arama_turu == "Link Analizi":
-        kelimeler = link_temizle_ve_kisalt(girdi_alani)
+        kelimeler = link_temizle_ve_coz(girdi_alani)
     else:
-        kelimeler = [k.strip() for k in girdi_alani.split() if k.strip()][:3]
+        kelimeler = [k.strip() for k in girdi_alani.split() if k.strip()][:4]
         
     temiz_list = [guvenli_metin_onar(k) for k in kelimeler if k.strip()]
     
     if temiz_list:
         sonuc_model = " ".join(temiz_list).upper()
-        st.success("Model Basariyla Cozuldu ve Kisaltildi: " + sonuc_model)
+        st.success("Model Basariyla Cozuldu: " + sonuc_model)
         st.write("Kopyalama Alani:")
         st.code(sonuc_model, language="text")
         
@@ -96,4 +94,7 @@ if arama_tetiklendi and girdi_alani:
         for sira, veri in enumerate(magaza_listesi):
             if sira % 2 == 0:
                 sol_sutun.link_button(veri["ad"], veri["url"], use_container_width=True)
-            else
+            else:
+                sag_sutun.link_button(veri["ad"], veri["url"], use_container_width=True)
+    else:
+        st.error("Analiz Hatasi: Gecersiz girdi.")
