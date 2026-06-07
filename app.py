@@ -30,21 +30,27 @@ with st.form("arama_formu"):
     
     arama_tetiklendi = st.form_submit_button("🔍 Motoru Çalıştır", type="primary", use_container_width=True)
 
-# 🤖 YAPAY ZEKA DESTEKLİ LINK OKUMA VE TEMİZLEME MOTORU
+# 🤖 GELİŞMİŞ LINK TEMİZLEME VE AI FİLTRELEME MOTORU
 def gelişmiş_kelime_temizle(url):
     try:
         if not url.startswith("http://") and not url.startswith("https://") and "." not in url:
             return None
             
-        # URL'i çöz (Türkçe karakterleri ve %20 gibi boşluk kodlarını onar)
-        url_cozulmus = urllib.parse.unquote(url)
+        # URL'i decode et (%20, %30 temizliği)
+        url_cozulmus = urllib.parse.unquote(url).lower()
         
-        # Linkin sonundaki parametreleri (? ve sonrası) temizle
+        # Linkin sonundaki parametreleri (? ve sonrası) tamamen kopar
         url_temiz = url_cozulmus.split("?")[0].split("#")[0]
         
-        # Linki bölümlere ayır
+        # 🌟 KRİTİK FİLTRE: Linkin başındaki domain, protokol ve uzantı kalıplarını regex ile tamamen kazı!
+        url_temiz = re.sub(r'https?://', '', url_temiz)
+        url_temiz = re.sub(r'www\.', '', url_temiz)
+        url_temiz = re.sub(r'^[a-zA-Z0-9\-]+\.(com|net|org|edu|gov|co|io|com\.tr|org\.tr|net\.tr)/?', '', url_temiz)
+        
+        # Siteden geriye kalan saf yolu (path) bölümlere ayır
         parcalar = re.split(r'[/_\-+]', url_temiz)
         
+        # Tamamen yasaklanacak kelimeler kelime havuzu
         yasakli = {
             "html", "urun", "p", "detay", "fiyat", "ozellikleri", "satinal", "gaming", 
             "oyuncu", "store", "product", "com", "tr", "www", "https", "http", "item", 
@@ -52,30 +58,21 @@ def gelişmiş_kelime_temizle(url):
             "sinerji", "incehesap", "trendyol", "hepsiburada", "amazon", "wraithesports"
         }
         
-        # Temiz kelimeleri ayıkla
         anlamli_parcalar = []
         for p in parcalar:
             p_temiz = p.replace(".html", "").strip()
-            # Sayısal ID'leri ve çöp kelimeleri eliyoruz
-            if len(p_temiz) > 1 and not p_temiz.isdigit() and p_temiz.lower() not in yasakli:
-                # Sitenin otomatik bastığı kısa kodları (u32084 gibi) filtrele
+            # Çöp kelime, saf sayı veya site adı değilse listeye ekle
+            if len(p_temiz) > 1 and not p_temiz.isdigit() and p_temiz not in yasakli:
+                # E-ticaret sitelerinin ürettiği kısa kodları (Örn: u32084) uçur
                 if not (any(char.isdigit() for char in p_temiz) and len(p_temiz) <= 6):
                     anlamli_parcalar.append(p_temiz)
         
         if anlamli_parcalar:
-            # 🧠 AI Kuralı: Donanım bileşenlerinde marka/model genellikle linkin BAŞINDA yer alır.
-            # "mhz", "cl32", "single", "kit" gibi teknik uzantıları listenin sonundan temizlemek için akıllı filtre:
-            teknik_copler = {"mhz", "cl30", "cl32", "cl36", "gb", "ddr4", "ddr5", "single", "kit", "dual", "siyah", "beyaz", "rgb"}
+            # Marka ve model linkin en başında başladığı için ilk 4 kelimeyi çekiyoruz
+            sonuc_kelimeleri = anlamli_parcalar[:4]
+            ham_sonuc = " ".join(sonuc_kelimeleri)
             
-            # Baştaki kelimelerden teknik çöp olmayanları önceliklendirerek en mantıklı 3-4 kelimeyi çek
-            ai_secimi = []
-            for kelime in anlamli_parcalar:
-                if len(ai_secimi) < 3:  # En ideal arama kelimesi uzunluğu
-                    ai_secimi.append(kelime)
-                elif len(ai_secimi) < 4 and kelime.lower() not in teknik_copler:
-                    ai_secimi.append(kelime)
-            
-            ham_sonuc = " ".join(ai_secimi)
+            # Sadece harf, sayı ve boşlukları koru
             temiz_sonuc = re.sub(r'[^a-zA-Z0-9\s]', '', ham_sonuc)
             return temiz_sonuc.strip()
             
