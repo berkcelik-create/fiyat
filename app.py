@@ -1,121 +1,85 @@
 import streamlit as st
 import urllib.parse
 import re
+import requests
 
 st.set_page_config(
-    page_title="G-ENGINE // Hardware Search Engine", 
-    page_icon="🔍", 
+    page_title="G-ENGINE // Pro", 
+    page_icon="⚡", 
     layout="centered"
 )
 
-st.title("G-ENGINE")
-st.caption("Hardware Search Engine // Global Donanım Arama ve Doğrulama Motoru")
+# 1. Döviz Verisi Çekici (Basit bir API üzerinden güncel kur)
+def get_dolar_kuru():
+    try:
+        # Ücretsiz bir kur servisinden USD/TRY verisi
+        response = requests.get("https://api.exchangerate-api.com/v4/latest/USD")
+        data = response.json()
+        return round(data['rates']['TRY'], 2)
+    except:
+        return "N/A"
+
+dolar = get_dolar_kuru()
+
+# Arayüz Düzeni
+st.title("G-ENGINE // Pro")
+col1, col2 = st.columns([3, 1])
+col1.caption("Global Donanım Arama ve Karar Destek Motoru")
+col2.metric("USD/TRY", f"{dolar} ₺")
 st.write("---")
 
-arama_turu = st.radio(
-    "Arama Modu:", 
-    ["Link Analizi", "Model İsmi ile Arama"], 
-    horizontal=True
-)
+# Karar Destek Paneli
+st.info(f"Piyasa Notu: Şu an kur {dolar} ₺ seviyesinde. Fiyatları kontrol ederken güncel kur değişimlerini dikkate almayı unutma.")
+
+arama_turu = st.radio("Arama Modu:", ["Link Analizi", "Model İsmi ile Arama"], horizontal=True)
 
 with st.form("arama_formu"):
     if arama_turu == "Link Analizi":
         girdi_alani = st.text_input("Ürün Linkini Girin:", placeholder="https://www.itopya.com/...")
     else:
-        girdi_alani = st.text_input("Ürün Modelini Girin:", placeholder="Örn: AMD Ryzen 7 7800X3D")
-    arama_tetiklendi = st.form_submit_button("Motoru Çalıştır", type="primary", use_container_width=True)
+        girdi_alani = st.text_input("Ürün Modelini Girin:", placeholder="Örn: PNY RTX 5070")
+    arama_tetiklendi = st.form_submit_button("Analiz Et ve Mağazaları Getir", type="primary", use_container_width=True)
 
+# ... (Daha önce yaptığımız temizleme fonksiyonları burada kalmaya devam edecek)
 def link_temizle_ve_coz(url):
     try:
         url = url.strip().lower()
-        if not url.startswith(("http://", "https://")):
-            url = "https://" + url
-        cozulmus_url = urllib.parse.unquote(url)
-        parsed_url = urllib.parse.urlparse(cozulmus_url)
-        link_yolu = parsed_url.path
-        ham_kelimeler = re.split(r'[/_\-+.]', link_yolu)
-        
-        engelli_kelimeler = [
-            "html", "urun", "p", "detay", "ara", "geforce", "oc", "overclock", 
-            "v1", "v2", "v3", "v4", "v5", "evo", "pro", "plus", "super", 
-            "gaming", "oyuncu", "rgb", "edition", "se", "white", "black"
-        ]
-        
-        filtrelenmis = []
-        for k in ham_kelimeler:
-            k = k.strip()
-            if k.startswith("aaa") and len(k) > 3:
-                k = k[3:]
-            if not k or k in engelli_kelimeler:
-                continue
-            if k.startswith('u') and any(c.isdigit() for c in k):
-                continue
-            if k.isdigit() and len(k) <= 3:
-                continue
-            filtrelenmis.append(k)
-            
-        if len(filtrelenmis) > 0:
-            return filtrelenmis[:4]
-        return ["oyuncu", "donanimi"]
-    except:
-        return ["oyuncu", "donanimi"]
+        if not url.startswith(("http://", "https://")): url = "https://" + url
+        parsed_url = urllib.parse.urlparse(urllib.parse.unquote(url))
+        ham = re.split(r'[/_\-+.]', parsed_url.path)
+        engelli = ["html", "urun", "p", "detay", "ara", "geforce", "oc", "overclock", "v2", "gaming", "rgb", "white", "black"]
+        filtrelenmis = [k for k in ham if k and k not in engelli and not (k.startswith('u') and any(c.isdigit() for c in k)) and not (k.isdigit() and len(k) <= 3)]
+        return filtrelenmis[:3] if filtrelenmis else ["donanimi"]
+    except: return ["donanimi"]
 
 def guvenli_metin_onar(metin):
-    metin = metin.lower().strip()
-    metin = metin.replace("ı", "i").replace("ş", "s").replace("ç", "c").replace("ğ", "g").replace("ü", "u").replace("ö", "o")
-    return metin
+    return metin.lower().strip().replace("ı", "i").replace("ş", "s").replace("ç", "c").replace("ğ", "g").replace("ü", "u").replace("ö", "o")
 
 if arama_tetiklendi and girdi_alani:
-    kelimeler = []
-    if arama_turu == "Link Analizi":
-        kelimeler = link_temizle_ve_coz(girdi_alani)
-    else:
-        engelliler = ["geforce", "oc", "overclock", "v2", "gaming"]
-        ham_girdi = [k.strip() for k in girdi_alani.split() if k.strip() and k.lower() not in engelliler]
-        kelimeler = ham_girdi[:4]
-        
-    temiz_list = [guvenli_metin_onar(k) for k in kelimeler if k.strip()]
+    if arama_turu == "Link Analizi": kelimeler = link_temizle_ve_coz(girdi_alani)
+    else: kelimeler = [k.strip() for k in girdi_alani.split() if k.strip()][:3]
     
-    if temiz_list:
-        sonuc_model = " ".join(temiz_list).upper()
-        st.success("Model Basariyla Cozuldu: " + sonuc_model)
-        st.write("Kopyalama Alani:")
-        st.code(sonuc_model, language="text")
-        
-        artili_sorgu = "+".join(temiz_list)
-        yuzdelik_sorgu = "%20".join(temiz_list)
-        normal_sorgu = urllib.parse.quote(" ".join(temiz_list))
-        
-        # İncehesap'ın rtx ve model numaralarını (rtx5070) doğru bulabilmesi için akıllı birleştirme
-        incehesap_list = []
-        for i, kelime in enumerate(temiz_list):
-            if kelime == "rtx" and i + 1 < len(temiz_list) and temiz_list[i+1].isdigit():
-                incehesap_list.append("rtx" + temiz_list[i+1])
-            elif kelime.isdigit() and i - 1 >= 0 and temiz_list[i-1] == "rtx":
-                continue
-            else:
-                incehesap_list.append(kelime)
-        incehesap_sorgu = "%20".join(incehesap_list)
-        
-        # İstediğin Mağazaların Birebir Listesi
-        magaza_listesi = [
-            {"ad": "Wraith Esports", "url": "https://wraithesports.com/search?q=" + normal_sorgu},
-            {"ad": "Incehesap", "url": "https://www.incehesap.com/arama/?fiyat_kriteri=1&s=" + incehesap_sorgu},
-            {"ad": "Itopya", "url": "https://www.itopya.com/ara?bul=" + normal_sorgu},
-            {"ad": "Sinerji", "url": "https://www.sinerji.gen.tr/arama?q=" + artili_sorgu},
-            {"ad": "Trendyol", "url": "https://www.trendyol.com/sr?q=" + normal_sorgu},
-            {"ad": "Hepsiburada", "url": "https://www.hepsiburada.com/ara?q=" + normal_sorgu},
-            {"ad": "Amazon TR", "url": "https://www.amazon.com.tr/s?k=" + normal_sorgu},
-            {"ad": "Akakce", "url": "https://www.akakce.com/arama/?q=" + normal_sorgu}
-        ]
-        
-        st.subheader("Magaza Secenekleri")
-        sol_sutun, sag_sutun = st.columns(2)
-        
-        for sira, veri in enumerate(magaza_listesi):
-            if sira % 2 == 0:
-                sol_sutun.link_button(veri["ad"], veri["url"], use_container_width=True)
-            else:
-                sag_sutun.link_button(veri["ad"], veri["url"], use_container_width=True)
-    else:
-        st.error("Analiz Hatasi: Gecersiz girdi.")
+    temiz_list = [guvenli_metin_onar(k) for k in kelimeler if k.strip()]
+    sonuc_model = " ".join(temiz_list).upper()
+    st.success(f"Analiz Edilen Model: {sonuc_model}")
+    
+    # Mağaza Linkleri
+    normal = urllib.parse.quote(" ".join(temiz_list))
+    incehesap = "%20".join(temiz_list).replace("rtx", "rtx") 
+    
+    magazalar = [
+        ("İncehesap", f"https://www.incehesap.com/arama/?fiyat_kriteri=1&s={incehesap}"),
+        ("İtopya", f"https://www.itopya.com/ara?bul={normal}"),
+        ("Sinerji", f"https://www.sinerji.gen.tr/arama?q={'+'.join(temiz_list)}"),
+        ("Akakçe", f"https://www.akakce.com/arama/?q={normal}")
+    ]
+    
+    st.subheader("Mağaza Seçenekleri")
+    for ad, url in magazalar:
+        st.link_button(ad, url, use_container_width=True)
+
+    st.write("---")
+    st.subheader("Piyasa Araçları")
+    c1, c2 = st.columns(2)
+    c1.link_button("Döviz Takip (Bigpara)", "https://www.bigpara.com/doviz/dolar/")
+    c2.link_button("Teknik İnceleme (TechPowerUp)", "https://www.techpowerup.com/gpu-specs/")
