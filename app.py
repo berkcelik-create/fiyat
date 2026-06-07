@@ -109,16 +109,18 @@ if arama_tetiklendi and girdi_alani:
                 sol_col.link_button(buton_metni, m['url'], use_container_width=True)
             else:
                 sag_col.link_button(buton_metni, m['url'], use_container_width=True)
-
-# Geri Bildirim Bölümü
-st.write("---")
-with st.expander("📬 Geri Bildirim & Öneri"):
-    with st.form("geri_bildirim_formu", clear_on_submit=True):
-        kullanici_mesaji = st.text_area("Mesajınızı buraya yazın:")
-        submit = st.form_submit_button("Gönder")
-        
-        if submit and kullanici_mesaji:
-            tarih = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            with open("geribildirimler.txt", "a", encoding="utf-8") as f:
-                f.write(f"[{tarih}] - {kullanici_mesaji}\n")
-            st.success("Mesajınız kaydedildi, teşekkürler!")
+# Kullanım Rehberi
+with st.expander("ℹ️ G-ENGINE Nasıl Kullanılır?"):
+    st.markdown("""
+    **G-ENGINE**, donanım arayışlarınızda en hızlı ve güvenilir fiyat karşılaştırmasını yapmanızı sağlar:
+    
+    1. **Arama Modunu Seçin**: 
+       - **🔗 Link Analizi**: İnternette gördüğünüz bir ürün linkini yapıştırın, sistem ürün ismini otomatik ayıklasın.
+       - **⌨️ Model İsmi ile Arama**: Direkt olarak aramak istediğiniz donanımın modelini yazın (Örn: *RTX 4070*).
+    
+    2. **Motoru Çalıştırın**: "🔍 Motoru Çalıştır" butonuna tıklayarak seçtiğiniz tüm mağazalardaki fiyatları listeleyin.
+    
+    3. **Karşılaştırın**: Çıkan sonuçlardan en uygun mağazaya tek tıkla gidin.
+    
+    *İpucu: Eğer aradığınız bir donanım ise, "Kriptonize Edilen Model" ismini kopyalayıp diğer sitelerde de aratabilirsiniz.*
+    """)
