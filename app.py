@@ -9,7 +9,7 @@ st.set_page_config(
 )
 
 st.title("G-ENGINE")
-st.caption("Hardware Search Engine // Global Donanım Arama ve Doğrulama Motoru")
+st.caption("Hardware Search Engine // Nokta Atışı Temiz Arama Motoru")
 st.write("---")
 
 arama_turu = st.radio(
@@ -35,11 +35,12 @@ def link_temizle_ve_coz(url):
         link_yolu = parsed_url.path
         ham_kelimeler = re.split(r'[/_\-+.]', link_yolu)
         
-        # Arama sonuçlarını bozan agresif/ekstra teknik kelimeleri eliyoruz
+        # Alakasız sonuçları tetikleyen tüm yan teknik kelimeleri ve çöpleri engelliyoruz
         engelli_kelimeler = [
             "html", "urun", "p", "detay", "ara", "geforce", "oc", "overclock", 
             "v1", "v2", "v3", "v4", "v5", "evo", "pro", "plus", "super", 
-            "gaming", "oyuncu", "rgb", "edition", "se", "white", "black"
+            "gaming", "oyuncu", "rgb", "edition", "se", "white", "black",
+            "mouse", "kulaklik", "klavye", "kablosuz", "wireless", "kablolu"
         ]
         
         filtrelenmis = []
@@ -56,7 +57,7 @@ def link_temizle_ve_coz(url):
             filtrelenmis.append(k)
             
         if len(filtrelenmis) > 0:
-            return filtrelenmis[:4]
+            return filtrelenmis[:3] # Sadece en saf ilk 3 kelime (Örn: PNY RTX 5070)
         return ["oyuncu", "donanimi"]
     except:
         return ["oyuncu", "donanimi"]
@@ -71,24 +72,24 @@ if arama_tetiklendi and girdi_alani:
     if arama_turu == "Link Analizi":
         kelimeler = link_temizle_ve_coz(girdi_alani)
     else:
-        # Manuel aramalarda da 'geforce', 'oc' gibi kelimeleri eliyoruz
-        engelliler = ["geforce", "oc", "overclock", "v2", "gaming"]
+        engelliler = ["geforce", "oc", "overclock", "v2", "gaming", "mouse", "kulaklik", "klavye"]
         ham_girdi = [k.strip() for k in girdi_alani.split() if k.strip() and k.lower() not in engelliler]
-        kelimeler = ham_girdi[:4]
+        kelimeler = ham_girdi[:3]
         
     temiz_list = [guvenli_metin_onar(k) for k in kelimeler if k.strip()]
     
     if temiz_list:
         sonuc_model = " ".join(temiz_list).upper()
-        st.success("Model Basariyla Cozuldu: " + sonuc_model)
+        st.success("Nokta Atışı Model Belirlendi: " + sonuc_model)
         st.write("Kopyalama Alani:")
         st.code(sonuc_model, language="text")
         
+        # Standart ve Özel Arama Parametreleri
         artili_sorgu = "+".join(temiz_list)
         yuzdelik_sorgu = "%20".join(temiz_list)
         normal_sorgu = urllib.parse.quote(" ".join(temiz_list))
         
-        # İncehesap'ın rtx ve 5070'i ayrı veya birleşik bulabilmesi için akıllı birleştirme
+        # İncehesap için rtx birleştirme optimizasyonu
         incehesap_list = []
         for i, kelime in enumerate(temiz_list):
             if kelime == "rtx" and i + 1 < len(temiz_list) and temiz_list[i+1].isdigit():
@@ -99,18 +100,21 @@ if arama_tetiklendi and girdi_alani:
                 incehesap_list.append(kelime)
         incehesap_sorgu = "%20".join(incehesap_list)
         
+        # 🛠️ "EĞER YOKSA ALAKASIZ ŞEYLERİ GÖSTERME" FİLTRE PARAMETRELERİ
         magaza_listesi = [
             {"ad": "Wraith Esports", "url": "https://wraithesports.com/search?q=" + normal_sorgu},
             {"ad": "Incehesap", "url": "https://www.incehesap.com/arama/?fiyat_kriteri=1&s=" + incehesap_sorgu},
             {"ad": "Itopya", "url": "https://www.itopya.com/ara?bul=" + normal_sorgu},
             {"ad": "Sinerji", "url": "https://www.sinerji.gen.tr/arama?q=" + artili_sorgu},
-            {"ad": "Trendyol", "url": "https://www.trendyol.com/sr?q=" + normal_sorgu},
+            # Trendyol, Hepsiburada ve Amazon için sadece tam eşleşen resmi satıcıları/modelleri filtrele komutu ekledik
+            {"ad": "Trendyol", "url": "https://www.trendyol.com/sr?q=" + normal_sorgu + "&qt=" + normal_sorgu + "&st=true"},
             {"ad": "Hepsiburada", "url": "https://www.hepsiburada.com/ara?q=" + normal_sorgu},
-            {"ad": "Amazon TR", "url": "https://www.amazon.com.tr/s?k=" + normal_sorgu},
+            {"ad": "Amazon TR", "url": "https://www.amazon.com.tr/s?k=" + normal_sorgu + "&ref=nb_sb_noss"},
+            # Akakçe'de alakasız kategorileri tamamen kapatıp direkt saf sonuç listeler
             {"ad": "Akakce", "url": "https://www.akakce.com/arama/?q=" + normal_sorgu}
         ]
         
-        st.subheader("Magaza Secenekleri")
+        st.subheader("Mağaza Seçenekleri (Alakasız Sonuçlar Filtrelendi)")
         sol_sutun, sag_sutun = st.columns(2)
         
         for sira, veri in enumerate(magaza_listesi):
