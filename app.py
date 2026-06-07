@@ -36,14 +36,13 @@ def link_temizle_ve_kisalt(url):
         ham_kelimeler = re.split(r'[/_\-+.]', link_yolu)
         
         sistem_copleri = ["html", "urun", "p", "detay", "fiyat", "ozellikleri", "satinal", "gaming", "oyuncu", "store", "product", "net", "org", "item", "shop", "bilgisayar", "ara"]
-        teknik_copler = ["rgb", "dpi", "hz", "1000hz", "26000", "26000dpi", "mouse", "kulaklik", "klavye", "kablosuz", "wireless", "kablolu", "siyah", "black", "beyaz", "white", "opaline", "gray", "gri", "gaming", "oyuncu", "ses", "kart", "g01", "v01", "m1", "m2", "v60", "aaa", "s", "x", "p"]
         
         filtrelenmis = []
         for k in ham_kelimeler:
             k = k.strip()
             if k.startswith("aaa") and len(k) > 3:
                 k = k[3:]
-            if len(k) <= 1 or k in sistem_copleri or k in teknik_copler:
+            if not k or k in sistem_copleri or len(k) <= 1:
                 continue
             if k.startswith('u') and any(c.isdigit() for c in k):
                 continue
@@ -53,13 +52,7 @@ def link_temizle_ve_kisalt(url):
             
         if len(filtrelenmis) > 0:
             return filtrelenmis[:3]
-            
-        yedek_liste = []
-        for x in ham_kelimeler:
-            x = x.strip()
-            if x and (x not in sistem_copleri) and len(x) > 1:
-                yedek_liste.append(x)
-        return yedek_liste[:3]
+        return ["oyuncu", "donanimi"]
     except:
         return ["oyuncu", "donanimi"]
 
@@ -98,3 +91,9 @@ if arama_tetiklendi and girdi_alani:
         ]
         
         st.subheader("Magaza Secenekleri")
+        sol_sutun, sag_sutun = st.columns(2)
+        
+        for sira, veri in enumerate(magaza_listesi):
+            if sira % 2 == 0:
+                sol_sutun.link_button(veri["ad"], veri["url"], use_container_width=True)
+            else
